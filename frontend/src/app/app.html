@@ -1,9 +1,161 @@
-<div class="min-h-screen bg-gray-100 flex items-center justify-center">
-  <div class="text-center">
-    <h1 class="text-6xl font-bold text-blue-600 mb-4">Pomodoro App</h1>
-    <p class="text-xl text-gray-700">Welcome to your productivity timer!</p>
-  </div>
-</div>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-4">
+        <h1 class="text-2xl font-bold text-gray-900">PomoWatch</h1>
+        <div class="flex items-center space-x-4">
+          <span class="text-sm text-gray-600">Pomodoro Timer</span>
+        </div>
+      </div>
+    </div>
+  </header>
 
-<router-outlet />
+  <!-- Main Content -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Timer Section -->
+    <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+      <div class="text-center">
+        <!-- Timer Display -->
+        <div class="mb-8">
+          <div class="relative inline-block">
+            <!-- Progress Circle -->
+            <svg class="w-64 h-64 transform -rotate-90" viewBox="0 0 100 100">
+              <!-- Background Circle -->
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke="#e5e7eb"
+                stroke-width="8"
+                class="opacity-30"
+              />
+              <!-- Progress Circle -->
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke="#3b82f6"
+                stroke-width="8"
+                stroke-linecap="round"
+                [style.stroke-dasharray]="'283'"
+                [style.stroke-dashoffset]="283 - (progressPercentage$ | async)! * 2.83"
+                class="transition-all duration-1000 ease-in-out"
+              />
+            </svg>
+            
+            <!-- Timer Text -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <div class="text-4xl font-mono font-bold text-gray-800 mb-2">
+                {{ remainingTime$ | async }}
+              </div>
+              <div class="text-lg text-gray-600">
+                {{ (timerState$ | async)?.sessionType === 'work' ? 'Work Time' : 'Break Time' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="flex justify-center space-x-4 mb-6">
+          <!-- Start Work Button -->
+          <button
+            (click)="startWorkSession()"
+            [disabled]="(isRunning$ | async)"
+            class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center space-x-2"
+          >
+            <span>🎯</span>
+            <span>Start Work</span>
+          </button>
+
+          <!-- Start Break Button -->
+          <button
+            (click)="startBreakSession()"
+            [disabled]="(isRunning$ | async)"
+            class="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center space-x-2"
+          >
+            <span>☕</span>
+            <span>Start Break</span>
+          </button>
+        </div>
+
+        <!-- Timer Controls -->
+        <div class="flex justify-center space-x-4">
+          <!-- Pause/Resume Button -->
+          <button
+            *ngIf="(isRunning$ | async)"
+            (click)="pauseTimer()"
+            class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          >
+            ⏸️ Pause
+          </button>
+
+          <button
+            *ngIf="(timerState$ | async)?.isPaused"
+            (click)="resumeTimer()"
+            class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          >
+            ▶️ Resume
+          </button>
+
+          <!-- Stop Button -->
+          <button
+            (click)="stopTimer()"
+            [disabled]="!(isRunning$ | async) && !(timerState$ | async)?.isPaused"
+            class="bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          >
+            ⏹️ Stop
+          </button>
+
+          <!-- Reset Button -->
+          <button
+            (click)="resetTimer()"
+            class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          >
+            🔄 Reset
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Session Info -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Current Session</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="text-center p-4 bg-blue-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">
+            {{ (timerState$ | async)?.sessionType === 'work' ? '🎯' : '☕' }}
+          </div>
+          <div class="text-sm text-gray-600 mt-1">Session Type</div>
+          <div class="font-semibold capitalize">
+            {{ (timerState$ | async)?.sessionType || 'None' }}
+          </div>
+        </div>
+
+        <div class="text-center p-4 bg-green-50 rounded-lg">
+          <div class="text-2xl font-bold text-green-600">
+            {{ (isRunning$ | async) ? '▶️' : (timerState$ | async)?.isPaused ? '⏸️' : '⏹️' }}
+          </div>
+          <div class="text-sm text-gray-600 mt-1">Status</div>
+          <div class="font-semibold">
+            {{ (isRunning$ | async) ? 'Running' : (timerState$ | async)?.isPaused ? 'Paused' : 'Stopped' }}
+          </div>
+        </div>
+
+        <div class="text-center p-4 bg-purple-50 rounded-lg">
+          <div class="text-2xl font-bold text-purple-600">
+            {{ ((progressPercentage$ | async) || 0).toFixed(0) }}%
+          </div>
+          <div class="text-sm text-gray-600 mt-1">Progress</div>
+          <div class="font-semibold">Complete</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Router Outlet for future pages -->
+  <router-outlet></router-outlet>
+</div>
 

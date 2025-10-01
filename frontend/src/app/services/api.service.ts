@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { Session, StartSessionRequest } from '../models/session.model';
+import { environment } from '../../environments/environment';
 
 export interface ApiResponse<T> {
   data?: T;
@@ -14,7 +15,7 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class ApiService {
-  private readonly baseUrl = '/api';
+  private readonly baseUrl = environment.apiBaseUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -120,10 +121,18 @@ export class ApiService {
 
   /**
    * Deletes a session by its ID
-   * Permanently removes the session from the database
+   * Soft deletes the session (marks as deleted but keeps in database)
    */
   deleteSession(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/sessions/${id}`);
+  }
+
+  /**
+   * Clears all sessions by soft deleting them
+   * Marks all sessions as deleted but keeps them in the database
+   */
+  clearAllSessions(): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/sessions/clear-all`);
   }
 
   /**

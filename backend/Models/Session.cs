@@ -59,5 +59,38 @@ public class Session
     /// Automatically updated on status changes
     /// </summary>
     public DateTime? UpdatedAt { get; set; }
+    
+    /// <summary>
+    /// Soft delete flag - when true, session is considered deleted but not removed from database
+    /// Allows for data recovery and maintains referential integrity
+    /// </summary>
+    public bool IsDeleted { get; set; } = false;
+    
+    /// <summary>
+    /// Timestamp when the session was soft deleted
+    /// Null if session has not been deleted
+    /// </summary>
+    public DateTime? DeletedAt { get; set; }
+    
+    /// <summary>
+    /// Ensures all DateTime properties are properly set to UTC
+    /// </summary>
+    public void EnsureUtcTimestamps()
+    {
+        StartTime = DateTime.SpecifyKind(StartTime, DateTimeKind.Utc);
+        if (EndTime.HasValue)
+        {
+            EndTime = DateTime.SpecifyKind(EndTime.Value, DateTimeKind.Utc);
+        }
+        CreatedAt = DateTime.SpecifyKind(CreatedAt, DateTimeKind.Utc);
+        if (UpdatedAt.HasValue)
+        {
+            UpdatedAt = DateTime.SpecifyKind(UpdatedAt.Value, DateTimeKind.Utc);
+        }
+        if (DeletedAt.HasValue)
+        {
+            DeletedAt = DateTime.SpecifyKind(DeletedAt.Value, DateTimeKind.Utc);
+        }
+    }
 }
 

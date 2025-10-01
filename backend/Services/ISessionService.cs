@@ -15,6 +15,7 @@ public interface ISessionService
     Task<Session> CancelSessionAsync(int sessionId);
     Task<Session> UpdateSessionAsync(Session session);
     Task<bool> DeleteSessionAsync(int id);
+    Task<bool> ClearAllSessionsAsync();
     Task<IEnumerable<Session>> GetSessionsByDateRangeAsync(DateTime startDate, DateTime endDate);
     Task<IEnumerable<Session>> GetSessionsByTypeAsync(string type);
     Task<Session?> GetCurrentSessionAsync();

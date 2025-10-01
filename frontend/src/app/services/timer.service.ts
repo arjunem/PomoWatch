@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, interval, Subscription } from 'rxjs';
-import { map, takeWhile } from 'rxjs/operators';
-import { TimerState, Session, PomodoroSettings } from '../models/session.model';
+import { BehaviorSubject, Observable, interval, Subscription, EMPTY } from 'rxjs';
+import { map, takeWhile, catchError } from 'rxjs/operators';
+import { TimerState, Session, PomodoroSettings, StartSessionRequest } from '../models/session.model';
+import { ApiService } from './api.service';
+import { parseUtcDate, calculateElapsedSeconds, minutesToSeconds } from '../utils/date.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -16,22 +18,24 @@ export class TimerService {
     totalDuration: 25 * 60 // 25 minutes in seconds
   });
 
-  private settingsSubject = new BehaviorSubject<PomodoroSettings>({
-    workDuration: 25,
-    breakDuration: 5,
-    longBreakDuration: 15,
-    sessionsUntilLongBreak: 4,
-    autoStartBreaks: false,
-    autoStartPomodoros: false,
-    soundEnabled: true
-  });
+         private settingsSubject = new BehaviorSubject<PomodoroSettings>({
+           workDuration: 25,
+           breakDuration: 5,
+           longBreakDuration: 15,
+           sessionsUntilLongBreak: 4,
+           autoStartBreaks: false,
+           autoStartPomodoros: false,
+           soundEnabled: true
+         });
 
-  private timerSubscription?: Subscription;
-  private workSessionCount = 0;
+         private sessionChangeSubject = new BehaviorSubject<boolean>(false);
+         private timerSubscription?: Subscription;
+         private workSessionCount = 0;
 
   // Observable streams
   public timerState$: Observable<TimerState> = this.timerStateSubject.asObservable();
   public settings$: Observable<PomodoroSettings> = this.settingsSubject.asObservable();
+  public sessionChange$: Observable<boolean> = this.sessionChangeSubject.asObservable();
 
   // Computed observables
   public remainingTime$: Observable<number> = this.timerState$.pipe(
@@ -57,47 +61,99 @@ export class TimerService {
     map(state => this.formatTime(state.remainingTime))
   );
 
-  constructor() {
+  constructor(private apiService: ApiService) {
     this.loadSettings();
+    this.loadActiveSession();
   }
 
   // ===== TIMER CONTROLS =====
   
   /**
    * Starts a new work session with the configured duration
-   * Increments the work session counter for tracking long breaks
+   * Creates session in backend and increments the work session counter
    */
   startWorkSession(): void {
     const settings = this.settingsSubject.value;
-    const duration = settings.workDuration * 60;
+    const duration = settings.workDuration;
     
-    this.startSession('work', duration);
-    this.workSessionCount++;
+    const request: StartSessionRequest = {
+      durationMinutes: duration
+    };
+
+    this.apiService.startWorkSession(request)
+      .pipe(
+        catchError(error => {
+          console.error('Failed to start work session:', error);
+          // Fallback to local-only session if API fails
+          this.startSessionLocal('work', duration * 60);
+          this.workSessionCount++;
+          return EMPTY;
+        })
+      )
+      .subscribe(session => {
+        this.startSessionWithBackendData(session, duration * 60);
+        this.workSessionCount++;
+      });
   }
 
   /**
    * Starts a new break session (short or long break based on session count)
-   * Long break is triggered after completing the configured number of work sessions
+   * Creates session in backend and handles long break logic
    */
   startBreakSession(): void {
     const settings = this.settingsSubject.value;
     const isLongBreak = this.workSessionCount >= settings.sessionsUntilLongBreak;
     const duration = isLongBreak ? settings.longBreakDuration : settings.breakDuration;
     
-    this.startSession('break', duration * 60);
-    
-    if (isLongBreak) {
-      this.workSessionCount = 0; // Reset counter after long break
-    }
+    const request: StartSessionRequest = {
+      durationMinutes: duration
+    };
+
+    this.apiService.startBreakSession(request)
+      .pipe(
+        catchError(error => {
+          console.error('Failed to start break session:', error);
+          // Fallback to local-only session if API fails
+          this.startSessionLocal('break', duration * 60);
+          if (isLongBreak) {
+            this.workSessionCount = 0; // Reset counter after long break
+          }
+          return EMPTY;
+        })
+      )
+      .subscribe(session => {
+        this.startSessionWithBackendData(session, duration * 60);
+        
+        if (isLongBreak) {
+          this.workSessionCount = 0; // Reset counter after long break
+        }
+      });
   }
 
   /**
-   * Internal method to start any type of session (work or break)
-   * Creates a new session object and initializes the timer state
+   * Internal method to start session with backend data
+   * Uses the session object returned from the API
    */
-  private startSession(type: 'work' | 'break', duration: number): void {
+  private startSessionWithBackendData(session: Session, duration: number): void {
+    this.updateTimerState({
+      currentSession: session,
+      remainingTime: duration,
+      isRunning: true,
+      isPaused: false,
+      sessionType: session.type as 'work' | 'break',
+      totalDuration: duration
+    });
+
+    this.startTimer();
+  }
+
+  /**
+   * Fallback method to start session locally when API fails
+   * Creates a local session object without backend persistence
+   */
+  private startSessionLocal(type: 'work' | 'break', duration: number): void {
     const newSession: Session = {
-      id: 0, // Will be set by backend
+      id: 0, // Local session, no backend ID
       type,
       startTime: new Date().toISOString(),
       status: 'running',
@@ -119,43 +175,151 @@ export class TimerService {
 
   /**
    * Pauses the currently running timer
-   * Only works if timer is currently running
+   * Updates session status in backend and stops local timer
    */
   pauseTimer(): void {
-    if (this.timerStateSubject.value.isRunning) {
-      this.updateTimerState({
-        isRunning: false,
-        isPaused: true
-      });
-      this.stopTimerInternal();
+    const currentState = this.timerStateSubject.value;
+    if (currentState.isRunning && currentState.currentSession) {
+      if (currentState.currentSession.id > 0) {
+        // Update backend session status (only if it has a valid backend ID)
+        this.apiService.pauseSession(currentState.currentSession.id)
+          .pipe(
+            catchError(error => {
+              console.error('Failed to pause session in backend:', error);
+              // Continue with local pause even if backend fails
+              return EMPTY;
+            })
+          )
+          .subscribe({
+            next: (updatedSession) => {
+              // Update local state with backend data
+              this.updateTimerState({
+                currentSession: updatedSession,
+                isRunning: false,
+                isPaused: true
+              });
+              this.stopTimerInternal();
+            },
+            error: () => {
+              // Handle any remaining errors and still pause locally
+              this.updateTimerState({
+                isRunning: false,
+                isPaused: true
+              });
+              this.stopTimerInternal();
+            }
+          });
+      } else {
+        // Local-only session, just pause locally
+        this.updateTimerState({
+          isRunning: false,
+          isPaused: true
+        });
+        this.stopTimerInternal();
+      }
     }
   }
 
   /**
    * Resumes a paused timer
-   * Only works if timer is currently paused
+   * Updates session status in backend and starts local timer
    */
   resumeTimer(): void {
-    if (this.timerStateSubject.value.isPaused) {
-      this.updateTimerState({
-        isRunning: true,
-        isPaused: false
-      });
-      this.startTimer();
+    const currentState = this.timerStateSubject.value;
+    if (currentState.isPaused && currentState.currentSession) {
+      if (currentState.currentSession.id > 0) {
+        // Update backend session status (only if it has a valid backend ID)
+        this.apiService.resumeSession(currentState.currentSession.id)
+          .pipe(
+            catchError(error => {
+              console.error('Failed to resume session in backend:', error);
+              // Continue with local resume even if backend fails
+              return EMPTY;
+            })
+          )
+          .subscribe({
+            next: (updatedSession) => {
+              // Update local state with backend data
+              this.updateTimerState({
+                currentSession: updatedSession,
+                isRunning: true,
+                isPaused: false
+              });
+              this.startTimer();
+            },
+            error: () => {
+              // Handle any remaining errors and still resume locally
+              this.updateTimerState({
+                isRunning: true,
+                isPaused: false
+              });
+              this.startTimer();
+            }
+          });
+      } else {
+        // Local-only session, just resume locally
+        this.updateTimerState({
+          isRunning: true,
+          isPaused: false
+        });
+        this.startTimer();
+      }
     }
   }
 
   /**
-   * Stops the timer completely and resets remaining time to 0
-   * Can be called from any timer state
+   * Stops the timer completely and cancels the session
+   * Updates backend session status and resets local timer
    */
   stopTimer(): void {
-    this.updateTimerState({
-      isRunning: false,
-      isPaused: false,
-      remainingTime: 0
-    });
-    this.stopTimerInternal();
+    console.log('TimerService: stopTimer called');
+    const currentState = this.timerStateSubject.value;
+    
+    if (currentState.currentSession && currentState.currentSession.id > 0) {
+      // Cancel session in backend (only if it has a valid backend ID)
+      this.apiService.cancelSession(currentState.currentSession.id)
+        .pipe(
+          catchError(error => {
+            console.error('Failed to cancel session in backend:', error);
+            // Continue with local stop even if backend fails
+            return EMPTY;
+          })
+        )
+        .subscribe({
+          next: () => {
+            // Reset local state
+            this.updateTimerState({
+              isRunning: false,
+              isPaused: false,
+              remainingTime: 0,
+              currentSession: null
+            });
+            this.stopTimerInternal();
+            this.notifySessionChanged(); // Notify that sessions have changed
+          },
+          error: () => {
+            // Handle any remaining errors and still stop locally
+            this.updateTimerState({
+              isRunning: false,
+              isPaused: false,
+              remainingTime: 0,
+              currentSession: null
+            });
+            this.stopTimerInternal();
+            this.notifySessionChanged(); // Notify that sessions have changed
+          }
+        });
+    } else {
+      // No active session or local-only session, just stop locally
+      this.updateTimerState({
+        isRunning: false,
+        isPaused: false,
+        remainingTime: 0,
+        currentSession: null
+      });
+      this.stopTimerInternal();
+      this.notifySessionChanged(); // Notify that sessions have changed
+    }
   }
 
   /**
@@ -163,13 +327,16 @@ export class TimerService {
    * Stops the timer and sets remaining time back to total duration
    */
   resetTimer(): void {
+    console.log('TimerService: resetTimer called');
     const currentState = this.timerStateSubject.value;
     this.updateTimerState({
       remainingTime: currentState.totalDuration,
       isRunning: false,
-      isPaused: false
+      isPaused: false,
+      currentSession: null // Clear current session on reset
     });
     this.stopTimerInternal();
+    this.notifySessionChanged(); // Notify that sessions have changed
   }
 
   // ===== TIMER LOGIC =====
@@ -213,29 +380,132 @@ export class TimerService {
 
   /**
    * Handles timer completion events
-   * Plays notification sound and optionally auto-starts next session
+   * Completes session in backend, plays notification sound, and optionally auto-starts next session
    */
   private onTimerComplete(): void {
     const currentState = this.timerStateSubject.value;
     
-    this.updateTimerState({
-      isRunning: false,
-      isPaused: false,
-      remainingTime: 0
-    });
+    // Complete session in backend
+    if (currentState.currentSession) {
+      this.apiService.completeSession(currentState.currentSession.id)
+        .pipe(
+          catchError(error => {
+            console.error('Failed to complete session in backend:', error);
+            // Continue with local completion even if backend fails
+            return EMPTY;
+          })
+        )
+        .subscribe({
+          next: (completedSession) => {
+          // Update local state with completed session data
+          this.updateTimerState({
+            currentSession: completedSession,
+            isRunning: false,
+            isPaused: false,
+            remainingTime: 0
+          });
 
-    // Play notification sound if enabled
-    if (this.settingsSubject.value.soundEnabled) {
-      this.playNotificationSound();
+          // Play notification sound if enabled
+          if (this.settingsSubject.value.soundEnabled) {
+            this.playNotificationSound();
+          }
+
+          // Auto-start next session based on settings
+          this.handleAutoStartNextSession(currentState.sessionType);
+          this.notifySessionChanged(); // Notify that sessions have changed
+          },
+          error: () => {
+            // Handle any remaining errors and still complete locally
+            this.updateTimerState({
+              isRunning: false,
+              isPaused: false,
+              remainingTime: 0
+            });
+
+            // Play notification sound if enabled
+            if (this.settingsSubject.value.soundEnabled) {
+              this.playNotificationSound();
+            }
+
+            // Auto-start next session based on settings
+            this.handleAutoStartNextSession(currentState.sessionType);
+            this.notifySessionChanged(); // Notify that sessions have changed
+          }
+        });
+    } else {
+      // No backend session, handle locally
+      this.updateTimerState({
+        isRunning: false,
+        isPaused: false,
+        remainingTime: 0
+      });
+
+      // Play notification sound if enabled
+      if (this.settingsSubject.value.soundEnabled) {
+        this.playNotificationSound();
+      }
+
+      // Auto-start next session based on settings
+      this.handleAutoStartNextSession(currentState.sessionType);
+      this.notifySessionChanged(); // Notify that sessions have changed
     }
+  }
 
-    // Auto-start next session based on settings
+  /**
+   * Handles auto-starting the next session based on current session type and settings
+   */
+  private handleAutoStartNextSession(currentSessionType: 'work' | 'break'): void {
     const settings = this.settingsSubject.value;
-    if (currentState.sessionType === 'work' && settings.autoStartBreaks) {
+    
+    if (currentSessionType === 'work' && settings.autoStartBreaks) {
       setTimeout(() => this.startBreakSession(), 1000);
-    } else if (currentState.sessionType === 'break' && settings.autoStartPomodoros) {
+    } else if (currentSessionType === 'break' && settings.autoStartPomodoros) {
       setTimeout(() => this.startWorkSession(), 1000);
     }
+  }
+
+  // ===== SESSION PERSISTENCE =====
+  
+  /**
+   * Loads any active session from the backend on service initialization
+   * Restores timer state if there's an unfinished session
+   */
+  private loadActiveSession(): void {
+    this.apiService.getActiveSession()
+      .pipe(
+        catchError(error => {
+          console.log('No active session found or API unavailable:', error.message);
+          return EMPTY;
+        })
+      )
+      .subscribe({
+        next: (activeSession) => {
+          if (activeSession) {
+            // Calculate remaining time based on session start time and duration
+            const sessionStart = parseUtcDate(activeSession.startTime);
+            const sessionDuration = minutesToSeconds(activeSession.durationMinutes);
+            const elapsed = calculateElapsedSeconds(sessionStart);
+            const remaining = Math.max(0, sessionDuration - elapsed);
+            
+            this.updateTimerState({
+              currentSession: activeSession,
+              remainingTime: remaining,
+              isRunning: activeSession.status === 'running',
+              isPaused: activeSession.status === 'paused',
+              sessionType: activeSession.type as 'work' | 'break',
+              totalDuration: sessionDuration
+            });
+
+            // Start timer if session was running
+            if (activeSession.status === 'running' && remaining > 0) {
+              this.startTimer();
+            }
+          }
+        },
+        error: (error) => {
+          console.log('Error loading active session:', error);
+        }
+      });
   }
 
   // ===== SETTINGS MANAGEMENT =====
@@ -333,5 +603,14 @@ export class TimerService {
 
   get currentWorkSessionCount(): number {
     return this.workSessionCount;
+  }
+
+  /**
+   * Notifies other components that the session list has changed
+   * Triggers a refresh of session-related data
+   */
+  private notifySessionChanged(): void {
+    console.log('TimerService: Notifying session changed');
+    this.sessionChangeSubject.next(true);
   }
 }

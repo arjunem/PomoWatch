@@ -10,6 +10,7 @@ public interface ISessionRepository
     Task<Session> CreateSessionAsync(Session session);
     Task<Session> UpdateSessionAsync(Session session);
     Task<bool> DeleteSessionAsync(int id);
+    Task<bool> SoftDeleteAllSessionsAsync();
     Task<IEnumerable<Session>> GetSessionsByDateRangeAsync(DateTime startDate, DateTime endDate);
     Task<IEnumerable<Session>> GetSessionsByTypeAsync(string type);
 }

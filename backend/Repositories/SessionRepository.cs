@@ -16,19 +16,22 @@ public class SessionRepository : ISessionRepository
     public async Task<IEnumerable<Session>> GetAllSessionsAsync()
     {
         return await _context.Sessions
+            .Where(s => !s.IsDeleted)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync();
     }
 
     public async Task<Session?> GetSessionByIdAsync(int id)
     {
-        return await _context.Sessions.FindAsync(id);
+        return await _context.Sessions
+            .Where(s => s.Id == id && !s.IsDeleted)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<Session?> GetActiveSessionAsync()
     {
         return await _context.Sessions
-            .Where(s => s.Status == "running" || s.Status == "paused")
+            .Where(s => (s.Status == "running" || s.Status == "paused") && !s.IsDeleted)
             .OrderByDescending(s => s.StartTime)
             .FirstOrDefaultAsync();
     }
@@ -46,6 +49,7 @@ public class SessionRepository : ISessionRepository
     public async Task<Session> UpdateSessionAsync(Session session)
     {
         session.UpdatedAt = DateTime.UtcNow;
+        session.EnsureUtcTimestamps(); // Ensure all timestamps are UTC
         _context.Entry(session).State = EntityState.Modified;
         await _context.SaveChangesAsync();
         return session;
@@ -54,10 +58,36 @@ public class SessionRepository : ISessionRepository
     public async Task<bool> DeleteSessionAsync(int id)
     {
         var session = await _context.Sessions.FindAsync(id);
-        if (session == null)
+        if (session == null || session.IsDeleted)
             return false;
 
-        _context.Sessions.Remove(session);
+        // Soft delete - mark as deleted but keep in database
+        session.IsDeleted = true;
+        session.DeletedAt = DateTime.UtcNow;
+        session.UpdatedAt = DateTime.UtcNow;
+        session.EnsureUtcTimestamps();
+        
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> SoftDeleteAllSessionsAsync()
+    {
+        var sessions = await _context.Sessions
+            .Where(s => !s.IsDeleted)
+            .ToListAsync();
+
+        if (!sessions.Any())
+            return false;
+
+        foreach (var session in sessions)
+        {
+            session.IsDeleted = true;
+            session.DeletedAt = DateTime.UtcNow;
+            session.UpdatedAt = DateTime.UtcNow;
+            session.EnsureUtcTimestamps();
+        }
+
         await _context.SaveChangesAsync();
         return true;
     }
@@ -65,7 +95,7 @@ public class SessionRepository : ISessionRepository
     public async Task<IEnumerable<Session>> GetSessionsByDateRangeAsync(DateTime startDate, DateTime endDate)
     {
         return await _context.Sessions
-            .Where(s => s.StartTime >= startDate && s.StartTime <= endDate)
+            .Where(s => s.StartTime >= startDate && s.StartTime <= endDate && !s.IsDeleted)
             .OrderByDescending(s => s.StartTime)
             .ToListAsync();
     }
@@ -73,7 +103,7 @@ public class SessionRepository : ISessionRepository
     public async Task<IEnumerable<Session>> GetSessionsByTypeAsync(string type)
     {
         return await _context.Sessions
-            .Where(s => s.Type == type)
+            .Where(s => s.Type == type && !s.IsDeleted)
             .OrderByDescending(s => s.StartTime)
             .ToListAsync();
     }

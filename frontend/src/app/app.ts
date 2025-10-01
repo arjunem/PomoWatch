@@ -5,10 +5,11 @@ import { Observable, Subject, takeUntil } from 'rxjs';
 import { TimerService } from './services/timer.service';
 import { ApiService } from './services/api.service';
 import { Session, TimerState, PomodoroSettings } from './models/session.model';
+import { SessionHistoryComponent } from './components/session-history/session-history.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule],
+  imports: [RouterOutlet, CommonModule, SessionHistoryComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -102,6 +103,7 @@ export class App implements OnInit, OnDestroy {
    * Delegate to timer service for implementation
    */
   stopTimer(): void {
+    console.log('App: stopTimer called');
     this.timerService.stopTimer();
   }
 
@@ -110,6 +112,7 @@ export class App implements OnInit, OnDestroy {
    * Delegate to timer service for implementation
    */
   resetTimer(): void {
+    console.log('App: resetTimer called');
     this.timerService.resetTimer();
   }
 }

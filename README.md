@@ -20,6 +20,12 @@ docker-compose up -d --build
 
 ### Access the Application
 
+#### Docker (Production-like)
+- **Frontend:** http://localhost:4201
+- **Backend API:** http://localhost:5001/api/health
+- **Swagger UI:** http://localhost:5001/swagger
+
+#### Local Development
 - **Frontend:** http://localhost:4200
 - **Backend API:** http://localhost:5000/api/health
 - **Swagger UI:** http://localhost:5000/swagger
@@ -33,6 +39,36 @@ docker-compose down
 # Stop and remove volumes
 docker-compose down -v
 ```
+
+## 🛠️ Local Development
+
+For local development, you can run the services individually:
+
+### Backend
+```bash
+cd backend
+dotnet run --launch-profile debug
+```
+
+### Frontend
+```bash
+cd frontend
+ng serve
+```
+
+### Benefits of This Setup
+- **No Port Conflicts**: Run Docker and local development simultaneously
+- **Flexible Testing**: Test both environments side by side
+- **Easy Switching**: Use Docker for production-like testing, local for development
+- **Smart API URLs**: Automatic configuration for different environments
+
+### Environment Configuration
+The Angular app automatically uses the correct API base URL:
+
+| Environment | API Base URL | How It Works |
+|-------------|--------------|--------------|
+| **Local Development** | `http://localhost:5000/api` | Direct connection to local backend (CORS enabled) |
+| **Docker** | `/api` | Relative URL, nginx proxies to backend container |
 
 ## 🏗️ Architecture
 

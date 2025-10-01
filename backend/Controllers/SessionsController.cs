@@ -334,6 +334,31 @@ public class SessionsController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
+
+    /// <summary>
+    /// Soft deletes all sessions (marks them as deleted but keeps in database)
+    /// </summary>
+    [HttpDelete("clear-all")]
+    public async Task<IActionResult> ClearAllSessions()
+    {
+        try
+        {
+            var result = await _sessionService.ClearAllSessionsAsync();
+            if (result)
+            {
+                return Ok(new { message = "All sessions have been cleared", count = "all" });
+            }
+            else
+            {
+                return Ok(new { message = "No sessions to clear", count = 0 });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error clearing all sessions");
+            return StatusCode(500, "Internal server error");
+        }
+    }
 }
 
 /// <summary>

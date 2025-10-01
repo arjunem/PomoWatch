@@ -8,7 +8,7 @@ RUN npm ci
 
 # Copy source code and build
 COPY . .
-RUN npm run build
+RUN npm run build --configuration=production
 
 # Stage 2: Production with Nginx
 FROM nginx:alpine AS runtime

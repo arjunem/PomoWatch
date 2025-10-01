@@ -120,39 +120,8 @@
       </div>
     </div>
 
-    <!-- Session Info -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-      <h2 class="text-xl font-semibold text-gray-800 mb-4">Current Session</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="text-center p-4 bg-blue-50 rounded-lg">
-          <div class="text-2xl font-bold text-blue-600">
-            {{ (timerState$ | async)?.sessionType === 'work' ? '🎯' : '☕' }}
-          </div>
-          <div class="text-sm text-gray-600 mt-1">Session Type</div>
-          <div class="font-semibold capitalize">
-            {{ (timerState$ | async)?.sessionType || 'None' }}
-          </div>
-        </div>
-
-        <div class="text-center p-4 bg-green-50 rounded-lg">
-          <div class="text-2xl font-bold text-green-600">
-            {{ (isRunning$ | async) ? '▶️' : (timerState$ | async)?.isPaused ? '⏸️' : '⏹️' }}
-          </div>
-          <div class="text-sm text-gray-600 mt-1">Status</div>
-          <div class="font-semibold">
-            {{ (isRunning$ | async) ? 'Running' : (timerState$ | async)?.isPaused ? 'Paused' : 'Stopped' }}
-          </div>
-        </div>
-
-        <div class="text-center p-4 bg-purple-50 rounded-lg">
-          <div class="text-2xl font-bold text-purple-600">
-            {{ ((progressPercentage$ | async) || 0).toFixed(0) }}%
-          </div>
-          <div class="text-sm text-gray-600 mt-1">Progress</div>
-          <div class="font-semibold">Complete</div>
-        </div>
-      </div>
-    </div>
+    <!-- Session History and Stats -->
+    <app-session-history></app-session-history>
   </main>
 
   <!-- Router Outlet for future pages -->

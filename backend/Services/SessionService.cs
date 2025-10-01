@@ -43,7 +43,8 @@ public class SessionService : ISessionService
             DurationMinutes = durationMinutes,
             Status = "running"
         };
-
+        
+        session.EnsureUtcTimestamps();
         return await _sessionRepository.CreateSessionAsync(session);
     }
 
@@ -63,7 +64,8 @@ public class SessionService : ISessionService
             DurationMinutes = durationMinutes,
             Status = "running"
         };
-
+        
+        session.EnsureUtcTimestamps();
         return await _sessionRepository.CreateSessionAsync(session);
     }
 
@@ -147,6 +149,11 @@ public class SessionService : ISessionService
     public async Task<bool> DeleteSessionAsync(int id)
     {
         return await _sessionRepository.DeleteSessionAsync(id);
+    }
+
+    public async Task<bool> ClearAllSessionsAsync()
+    {
+        return await _sessionRepository.SoftDeleteAllSessionsAsync();
     }
 
     public async Task<IEnumerable<Session>> GetSessionsByDateRangeAsync(DateTime startDate, DateTime endDate)

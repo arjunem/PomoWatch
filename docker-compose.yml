@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: pomodoro-backend
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - ./data:/app/data
     environment:
@@ -24,7 +24,7 @@ services:
       dockerfile: Dockerfile
     container_name: pomodoro-frontend
     ports:
-      - "4200:80"
+      - "4201:80"
     depends_on:
       - backend
     networks:

@@ -48,6 +48,17 @@ dist/
 tmp/
 out-tsc/
 .angular/
+.angular/cache/
+
+# Angular build artifacts
+*.ngfactory.ts
+*.ngsummary.json
+*.metadata.json
+
+# Angular compilation
+bazel-out/
+*.launch
+.settings/
 
 # IDEs and editors
 .vscode/
@@ -74,9 +85,7 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# OS
-.DS_Store
-Thumbs.db
+# OS (removing duplicates)
 *.stackdump
 
 # Environment variables
@@ -95,10 +104,12 @@ coverage/
 *.spec.ts.snap
 e2e/screenshots/
 e2e/videos/
+/libpeerconnection.log
+testem.log
+/typings
 
 # Build outputs
 build/
-dist/
 *.js.map
 
 # Database
@@ -106,11 +117,19 @@ dist/
 *.sqlite
 *.sqlite3
 
-# Compiled files
-*.js
-*.map
+# TypeScript compiled output (only in Angular dist folder, not config files)
+# Note: We don't ignore ALL .js files since config files need to be tracked
+dist/**/*.js
+dist/**/*.map
+out-tsc/**/*.js
+out-tsc/**/*.map
+*.ngfactory.js
+*.ngsummary.json
+
+# Allow important config files
 !karma.conf.js
 !protractor.conf.js
 !jest.config.js
 !webpack.config.js
+!tailwind.config.js
 

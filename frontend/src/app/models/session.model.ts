@@ -1,3 +1,7 @@
+/**
+ * Represents a Pomodoro session in the system
+ * Contains all information about a work or break session
+ */
 export interface Session {
   id: number;
   type: 'work' | 'break';
@@ -9,10 +13,18 @@ export interface Session {
   updatedAt?: string;
 }
 
+/**
+ * Request model for starting a new Pomodoro session
+ * Used when creating work or break sessions
+ */
 export interface StartSessionRequest {
   durationMinutes: number;
 }
 
+/**
+ * Represents the current state of the timer
+ * Used for reactive UI updates and state management
+ */
 export interface TimerState {
   currentSession: Session | null;
   remainingTime: number; // in seconds
@@ -22,6 +34,10 @@ export interface TimerState {
   totalDuration: number; // in seconds
 }
 
+/**
+ * User-configurable settings for the Pomodoro timer
+ * Controls durations, behavior, and preferences
+ */
 export interface PomodoroSettings {
   workDuration: number; // in minutes
   breakDuration: number; // in minutes

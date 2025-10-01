@@ -61,7 +61,12 @@ export class TimerService {
     this.loadSettings();
   }
 
-  // Timer Controls
+  // ===== TIMER CONTROLS =====
+  
+  /**
+   * Starts a new work session with the configured duration
+   * Increments the work session counter for tracking long breaks
+   */
   startWorkSession(): void {
     const settings = this.settingsSubject.value;
     const duration = settings.workDuration * 60;
@@ -70,6 +75,10 @@ export class TimerService {
     this.workSessionCount++;
   }
 
+  /**
+   * Starts a new break session (short or long break based on session count)
+   * Long break is triggered after completing the configured number of work sessions
+   */
   startBreakSession(): void {
     const settings = this.settingsSubject.value;
     const isLongBreak = this.workSessionCount >= settings.sessionsUntilLongBreak;
@@ -82,6 +91,10 @@ export class TimerService {
     }
   }
 
+  /**
+   * Internal method to start any type of session (work or break)
+   * Creates a new session object and initializes the timer state
+   */
   private startSession(type: 'work' | 'break', duration: number): void {
     const newSession: Session = {
       id: 0, // Will be set by backend
@@ -104,6 +117,10 @@ export class TimerService {
     this.startTimer();
   }
 
+  /**
+   * Pauses the currently running timer
+   * Only works if timer is currently running
+   */
   pauseTimer(): void {
     if (this.timerStateSubject.value.isRunning) {
       this.updateTimerState({
@@ -114,6 +131,10 @@ export class TimerService {
     }
   }
 
+  /**
+   * Resumes a paused timer
+   * Only works if timer is currently paused
+   */
   resumeTimer(): void {
     if (this.timerStateSubject.value.isPaused) {
       this.updateTimerState({
@@ -124,6 +145,10 @@ export class TimerService {
     }
   }
 
+  /**
+   * Stops the timer completely and resets remaining time to 0
+   * Can be called from any timer state
+   */
   stopTimer(): void {
     this.updateTimerState({
       isRunning: false,
@@ -133,6 +158,10 @@ export class TimerService {
     this.stopTimerInternal();
   }
 
+  /**
+   * Resets the timer to its original duration without changing session type
+   * Stops the timer and sets remaining time back to total duration
+   */
   resetTimer(): void {
     const currentState = this.timerStateSubject.value;
     this.updateTimerState({
@@ -143,7 +172,12 @@ export class TimerService {
     this.stopTimerInternal();
   }
 
-  // Timer Logic
+  // ===== TIMER LOGIC =====
+  
+  /**
+   * Starts the internal countdown timer using RxJS interval
+   * Decrements remaining time every second and handles completion
+   */
   private startTimer(): void {
     this.stopTimerInternal(); // Stop any existing timer
     
@@ -166,6 +200,10 @@ export class TimerService {
       });
   }
 
+  /**
+   * Stops the internal countdown timer and cleans up subscription
+   * Called internally to prevent memory leaks
+   */
   private stopTimerInternal(): void {
     if (this.timerSubscription) {
       this.timerSubscription.unsubscribe();
@@ -173,6 +211,10 @@ export class TimerService {
     }
   }
 
+  /**
+   * Handles timer completion events
+   * Plays notification sound and optionally auto-starts next session
+   */
   private onTimerComplete(): void {
     const currentState = this.timerStateSubject.value;
     
@@ -196,7 +238,12 @@ export class TimerService {
     }
   }
 
-  // Settings Management
+  // ===== SETTINGS MANAGEMENT =====
+  
+  /**
+   * Updates the Pomodoro settings with new values
+   * Merges with existing settings and saves to localStorage
+   */
   updateSettings(settings: Partial<PomodoroSettings>): void {
     const currentSettings = this.settingsSubject.value;
     const newSettings = { ...currentSettings, ...settings };
@@ -204,6 +251,10 @@ export class TimerService {
     this.saveSettings(newSettings);
   }
 
+  /**
+   * Loads settings from localStorage on service initialization
+   * Falls back to default settings if loading fails
+   */
   private loadSettings(): void {
     const saved = localStorage.getItem('pomodoro-settings');
     if (saved) {
@@ -216,22 +267,38 @@ export class TimerService {
     }
   }
 
+  /**
+   * Saves current settings to localStorage for persistence
+   */
   private saveSettings(settings: PomodoroSettings): void {
     localStorage.setItem('pomodoro-settings', JSON.stringify(settings));
   }
 
-  // Utility Methods
+  // ===== UTILITY METHODS =====
+  
+  /**
+   * Updates the timer state with partial updates
+   * Merges new values with existing state and emits to subscribers
+   */
   private updateTimerState(updates: Partial<TimerState>): void {
     const currentState = this.timerStateSubject.value;
     this.timerStateSubject.next({ ...currentState, ...updates });
   }
 
+  /**
+   * Formats seconds into MM:SS display format
+   * Used for timer display in the UI
+   */
   private formatTime(seconds: number): string {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
+  /**
+   * Plays a notification sound using Web Audio API
+   * Creates a simple beep sound when timer completes
+   */
   private playNotificationSound(): void {
     // Simple beep sound using Web Audio API
     try {

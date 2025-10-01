@@ -15,20 +15,22 @@ import { Session, TimerState, PomodoroSettings } from './models/session.model';
 export class App implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
-  // Timer state observables
+  // ===== OBSERVABLE STREAMS =====
+  // Timer state observables for reactive UI updates
   timerState$: Observable<TimerState>;
   remainingTime$: Observable<string>;
   isRunning$: Observable<boolean>;
   progressPercentage$: Observable<number>;
   currentSession$: Observable<Session | null>;
 
-  // Settings
+  // Settings observable for user preferences
   settings$: Observable<PomodoroSettings>;
 
   constructor(
     private timerService: TimerService,
     private apiService: ApiService
   ) {
+    // Initialize observable streams from timer service
     this.timerState$ = this.timerService.timerState$;
     this.remainingTime$ = this.timerService.timeDisplay$;
     this.isRunning$ = this.timerService.isRunning$;
@@ -37,6 +39,10 @@ export class App implements OnInit, OnDestroy {
     this.settings$ = this.timerService.settings$;
   }
 
+  /**
+   * Component initialization lifecycle hook
+   * Performs API health check to verify backend connectivity
+   */
   ngOnInit(): void {
     // Check API connectivity on startup
     this.apiService.getHealth()
@@ -47,32 +53,62 @@ export class App implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Component destruction lifecycle hook
+   * Cleans up subscriptions to prevent memory leaks
+   */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  // Timer Controls
+  // ===== TIMER CONTROL METHODS =====
+  // These methods delegate to the timer service for business logic
+
+  /**
+   * Starts a new work session with configured duration
+   * Delegate to timer service for implementation
+   */
   startWorkSession(): void {
     this.timerService.startWorkSession();
   }
 
+  /**
+   * Starts a new break session (short or long based on session count)
+   * Delegate to timer service for implementation
+   */
   startBreakSession(): void {
     this.timerService.startBreakSession();
   }
 
+  /**
+   * Pauses the currently running timer
+   * Delegate to timer service for implementation
+   */
   pauseTimer(): void {
     this.timerService.pauseTimer();
   }
 
+  /**
+   * Resumes a paused timer
+   * Delegate to timer service for implementation
+   */
   resumeTimer(): void {
     this.timerService.resumeTimer();
   }
 
+  /**
+   * Stops the timer completely and resets to 0
+   * Delegate to timer service for implementation
+   */
   stopTimer(): void {
     this.timerService.stopTimer();
   }
 
+  /**
+   * Resets the timer to its original duration
+   * Delegate to timer service for implementation
+   */
   resetTimer(): void {
     this.timerService.resetTimer();
   }

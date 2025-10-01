@@ -36,6 +36,21 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "debug": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "http://localhost:5001",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_DETAILEDERRORS": "true",
+        "ASPNETCORE_LOGGING__LOGLEVEL__DEFAULT": "Debug",
+        "ASPNETCORE_LOGGING__LOGLEVEL__MICROSOFT": "Information",
+        "ASPNETCORE_LOGGING__LOGLEVEL__MICROSOFT_ASPNETCORE": "Debug",
+        "ASPNETCORE_LOGGING__LOGLEVEL__MICROSOFT_ENTITYFRAMEWORKCORE": "Information"
+      }
     }
   }
 }

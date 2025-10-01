@@ -17,6 +17,9 @@ WORKDIR /app
 # Copy the build output from the build stage
 COPY --from=build /app/out .
 
+# Create data directory for SQLite database
+RUN mkdir -p /app/data
+
 # Expose port 5000
 EXPOSE 5000
 

@@ -1,0 +1,116 @@
+# .NET Backend
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]pp_Data/
+
+# Entity Framework
+*.db
+*.db-shm
+*.db-wal
+Migrations/
+
+# .NET User-specific files
+*.rsuser
+*.userprefs
+*.user
+
+# NuGet
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+# Visual Studio / Rider
+.vs/
+.idea/
+.vscode/
+*.suo
+*.user
+*.sln.docstates
+
+# Angular Frontend
+node_modules/
+dist/
+tmp/
+out-tsc/
+.angular/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.bak
+*.tmp
+*.temp
+*~
+
+# System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+*.stackdump
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Coverage
+coverage/
+*.lcov
+.nyc_output
+
+# Testing
+*.spec.ts.snap
+e2e/screenshots/
+e2e/videos/
+
+# Build outputs
+build/
+dist/
+*.js.map
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Compiled files
+*.js
+*.map
+!karma.conf.js
+!protractor.conf.js
+!jest.config.js
+!webpack.config.js
+

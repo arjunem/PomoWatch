@@ -66,7 +66,6 @@ export class TimerService {
     private apiService: ApiService,
     private settingsService: SettingsService
   ) {
-    this.loadSettings();
     // Listen for settings changes and update timer service
     this.settingsService.settings$.subscribe(settings => {
       const frontendSettings: PomodoroSettings = {
@@ -546,32 +545,6 @@ export class TimerService {
     this.saveSettings(newSettings);
   }
 
-  /**
-   * Loads settings from backend on service initialization
-   * Falls back to default settings if loading fails
-   */
-  private loadSettings(): void {
-    this.settingsService.getSettings().subscribe({
-      next: (settings) => {
-        // Convert backend DTO to frontend interface
-        const frontendSettings: PomodoroSettings = {
-          workDuration: settings.workDuration,
-          breakDuration: settings.breakDuration,
-          longBreakDuration: settings.longBreakDuration,
-          sessionsUntilLongBreak: settings.sessionsUntilLongBreak,
-          autoStartBreaks: settings.autoStartBreaks,
-          autoStartPomodoros: settings.autoStartPomodoros,
-          soundEnabled: settings.soundEnabled
-        };
-        this.settingsSubject.next(frontendSettings);
-        console.log('Settings loaded from backend:', frontendSettings);
-      },
-      error: (error) => {
-        console.error('Failed to load settings from backend:', error);
-        // Keep default settings if loading fails
-      }
-    });
-  }
 
   /**
    * Saves current settings to backend for persistence
@@ -663,7 +636,7 @@ export class TimerService {
    * Notifies other components that the session list has changed
    * Triggers a refresh of session-related data
    */
-  private notifySessionChanged(): void {
+  public notifySessionChanged(): void {
     console.log('TimerService: Notifying session changed');
     this.sessionChangeSubject.next(true);
   }

@@ -32,6 +32,8 @@ export class SettingsService {
   public settings$ = this.settingsSubject.asObservable();
 
   constructor(private http: HttpClient) {
+    console.log('SettingsService: Constructor called');
+    // Load settings immediately when service is constructed
     this.loadSettings();
   }
 
@@ -82,12 +84,13 @@ export class SettingsService {
    * Loads settings from backend on service initialization
    */
   private loadSettings(): void {
+    console.log('SettingsService: Starting to load settings...');
     this.getSettings().subscribe({
       next: (settings) => {
-        console.log('Settings loaded:', settings);
+        console.log('SettingsService: Settings loaded successfully:', settings);
       },
       error: (error) => {
-        console.error('Failed to load settings:', error);
+        console.error('SettingsService: Failed to load settings:', error);
         // Keep default settings if loading fails
       }
     });

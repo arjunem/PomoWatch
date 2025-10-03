@@ -116,6 +116,15 @@ public class SettingsService : ISettingsService
         await SetSettingValueAsync("auto_start_breaks", _defaultSettings["auto_start_breaks"]);
         await SetSettingValueAsync("auto_start_pomodoros", _defaultSettings["auto_start_pomodoros"]);
         await SetSettingValueAsync("sound_enabled", _defaultSettings["sound_enabled"]);
+        
+        // Set the default values in the DTO
+        defaultSettings.WorkDuration = int.Parse(_defaultSettings["work_duration"]);
+        defaultSettings.BreakDuration = int.Parse(_defaultSettings["break_duration"]);
+        defaultSettings.LongBreakDuration = int.Parse(_defaultSettings["long_break_duration"]);
+        defaultSettings.SessionsUntilLongBreak = int.Parse(_defaultSettings["sessions_until_long_break"]);
+        defaultSettings.AutoStartBreaks = bool.Parse(_defaultSettings["auto_start_breaks"]);
+        defaultSettings.AutoStartPomodoros = bool.Parse(_defaultSettings["auto_start_pomodoros"]);
+        defaultSettings.SoundEnabled = bool.Parse(_defaultSettings["sound_enabled"]);
 
         return defaultSettings;
     }

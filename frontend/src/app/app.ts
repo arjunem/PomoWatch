@@ -8,10 +8,11 @@ import { SettingsService } from './services/settings.service';
 import { Session, TimerState, PomodoroSettings } from './models/session.model';
 import { SessionHistoryComponent } from './components/session-history/session-history.component';
 import { SettingsComponent } from './components/settings/settings.component';
+import { TodayProgressComponent } from './components/today-progress/today-progress.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, SessionHistoryComponent, SettingsComponent],
+  imports: [RouterOutlet, CommonModule, SessionHistoryComponent, TodayProgressComponent, SettingsComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -57,6 +58,14 @@ export class App implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => console.log('API Health Check:', response),
         error: (error) => console.error('API Connection Error:', error)
+      });
+
+    // Ensure settings are loaded on app startup by subscribing to settings$
+    this.settingsService.settings$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (settings) => console.log('Settings loaded on app startup:', settings),
+        error: (error) => console.error('Failed to load settings on startup:', error)
       });
   }
 

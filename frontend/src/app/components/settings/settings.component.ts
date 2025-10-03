@@ -10,7 +10,7 @@ import { TimerService } from '../../services/timer.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
+    <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
       <div class="max-w-4xl mx-auto">
         <!-- Header -->
         <div class="text-center mb-8">
@@ -164,9 +164,17 @@ import { TimerService } from '../../services/timer.service';
             <div class="flex flex-col sm:flex-row gap-4 justify-end">
               <button
                 type="button"
-                (click)="resetToDefaults()"
+                (click)="cancelSettings()"
                 [disabled]="isLoading"
                 class="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                Cancel
+              </button>
+              
+              <button
+                type="button"
+                (click)="resetToDefaults()"
+                [disabled]="isLoading"
+                class="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                 <span *ngIf="!isLoading">Reset to Defaults</span>
                 <span *ngIf="isLoading" class="flex items-center">
                   <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -204,6 +212,7 @@ import { TimerService } from '../../services/timer.service';
 })
 export class SettingsComponent implements OnInit, OnDestroy {
   @Output() settingsSaved = new EventEmitter<void>();
+  @Output() settingsCancelled = new EventEmitter<void>();
 
   settings: PomodoroSettingsDto = {
     workDuration: 25,
@@ -226,7 +235,18 @@ export class SettingsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadSettings();
+    // Subscribe to settings changes from the service
+    this.settingsService.settings$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (settings) => {
+          console.log('SettingsComponent: Received settings update:', settings);
+          this.settings = { ...settings };
+        },
+        error: (error) => {
+          console.error('SettingsComponent: Failed to receive settings:', error);
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -234,25 +254,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  /**
-   * Loads settings from the backend
-   */
-  private loadSettings(): void {
-    this.isLoading = true;
-    this.settingsService.getSettings()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (settings) => {
-          this.settings = { ...settings };
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('Failed to load settings:', error);
-          this.showMessage('Failed to load settings. Using default values.', 'error');
-          this.isLoading = false;
-        }
-      });
-  }
 
   /**
    * Handles form submission to save settings
@@ -309,6 +310,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         }
       });
+  }
+
+  /**
+   * Handles cancel button click
+   */
+  cancelSettings(): void {
+    this.settingsCancelled.emit();
   }
 
   /**

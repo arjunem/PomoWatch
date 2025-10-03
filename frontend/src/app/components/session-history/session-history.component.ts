@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable, Subject, takeUntil } from 'rxjs';
 import { Session, TimerState } from '../../models/session.model';
-import { ApiService, SessionStatsService } from '../../services/api.service';
+import { ApiService } from '../../services/api.service';
 import { TimerService } from '../../services/timer.service';
 import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
 
@@ -101,29 +101,6 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
           </div>
         </div>
       </div>
-      </div>
-    </div>
-
-    <!-- Today's Stats - Always visible section -->
-    <div *ngIf="todayStats$ | async as stats" class="bg-white rounded-xl shadow-lg p-6 mt-6">
-      <h2 class="text-xl font-semibold text-gray-800 mb-4">Today's Progress</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="text-center p-3 bg-green-50 rounded-lg">
-          <div class="text-2xl font-bold text-green-600">{{ stats.totalWorkTime }}</div>
-          <div class="text-sm text-gray-600">Work Minutes</div>
-        </div>
-        <div class="text-center p-3 bg-blue-50 rounded-lg">
-          <div class="text-2xl font-bold text-blue-600">{{ stats.totalBreakTime }}</div>
-          <div class="text-sm text-gray-600">Break Minutes</div>
-        </div>
-        <div class="text-center p-3 bg-purple-50 rounded-lg">
-          <div class="text-2xl font-bold text-purple-600">{{ stats.completedSessions }}</div>
-          <div class="text-sm text-gray-600">Completed</div>
-        </div>
-        <div class="text-center p-3 bg-orange-50 rounded-lg">
-          <div class="text-2xl font-bold text-orange-600">{{ stats.totalSessions }}</div>
-          <div class="text-sm text-gray-600">Total Sessions</div>
-        </div>
       </div>
     </div>
 
@@ -255,7 +232,6 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
   
   recentSessions: Session[] = [];
   currentSession$: Observable<Session | null>;
-  todayStats$: Observable<any>;
   isDeleting = false;
   isClearing = false;
   isCollapsed = true; // Start collapsed by default
@@ -270,12 +246,10 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
 
   constructor(
     private apiService: ApiService,
-    private statsService: SessionStatsService,
     private timerService: TimerService,
     private cdr: ChangeDetectorRef
   ) {
     this.currentSession$ = this.timerService.currentSession$;
-    this.todayStats$ = this.statsService.getTodayStats();
   }
 
   ngOnInit(): void {
@@ -320,9 +294,6 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
           console.error('Failed to load recent sessions:', error);
         }
       });
-    
-    // Also refresh today's stats when sessions change
-    this.refreshStatistics();
   }
 
   /**
@@ -376,8 +347,8 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
           // Refresh the entire session list to ensure consistency
           this.loadRecentSessions();
           
-          // Refresh statistics after deletion
-          this.refreshStatistics();
+          // Notify that sessions have changed to update statistics
+          this.timerService.notifySessionChanged();
         },
         error: (error) => {
           console.error('Failed to delete session:', error);
@@ -498,8 +469,9 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
           this.isClearing = false;
           // Refresh the session list to show empty state
           this.loadRecentSessions();
-          // Refresh statistics after clearing all
-          this.refreshStatistics();
+          
+          // Notify that sessions have changed to update statistics
+          this.timerService.notifySessionChanged();
         },
         error: (error) => {
           console.error('Failed to clear sessions:', error);
@@ -509,26 +481,4 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Refreshes the statistics display
-   * Called after session operations to ensure real-time updates
-   */
-  private refreshStatistics(): void {
-    console.log('SessionHistoryComponent: Refreshing statistics');
-    this.statsService.getTodayStats()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (stats) => {
-          this.todayStats$ = new Observable(observer => {
-            observer.next(stats);
-            observer.complete();
-          });
-          // Trigger change detection to update the UI
-          this.cdr.detectChanges();
-        },
-        error: (error) => {
-          console.error('Failed to refresh statistics:', error);
-        }
-      });
-  }
 }

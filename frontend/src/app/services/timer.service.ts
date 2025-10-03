@@ -4,6 +4,8 @@ import { map, takeWhile, catchError } from 'rxjs/operators';
 import { TimerState, Session, PomodoroSettings, StartSessionRequest } from '../models/session.model';
 import { ApiService } from './api.service';
 import { SettingsService, PomodoroSettingsDto } from './settings.service';
+import { OfflineService } from './offline.service';
+import { OfflineStorageService } from './offline-storage.service';
 import { parseUtcDate, calculateElapsedSeconds, minutesToSeconds } from '../utils/date.utils';
 
 @Injectable({
@@ -26,7 +28,8 @@ export class TimerService {
            sessionsUntilLongBreak: 4,
            autoStartBreaks: false,
            autoStartPomodoros: false,
-           soundEnabled: true
+           soundEnabled: true,
+           offlineMode: false
          });
 
          private sessionChangeSubject = new BehaviorSubject<boolean>(false);
@@ -64,7 +67,9 @@ export class TimerService {
 
   constructor(
     private apiService: ApiService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private offlineService: OfflineService,
+    private offlineStorageService: OfflineStorageService
   ) {
     // Listen for settings changes and update timer service
     this.settingsService.settings$.subscribe(settings => {
@@ -75,7 +80,8 @@ export class TimerService {
         sessionsUntilLongBreak: settings.sessionsUntilLongBreak,
         autoStartBreaks: settings.autoStartBreaks,
         autoStartPomodoros: settings.autoStartPomodoros,
-        soundEnabled: settings.soundEnabled
+        soundEnabled: settings.soundEnabled,
+        offlineMode: settings.offlineMode
       };
       this.settingsSubject.next(frontendSettings);
       console.log('Settings updated in timer service:', frontendSettings);
@@ -94,6 +100,14 @@ export class TimerService {
     const settings = this.settingsSubject.value;
     const duration = settings.workDuration;
     
+    // Check if we're in offline mode - skip API call entirely
+    if (settings.offlineMode || this.offlineService.isOffline) {
+      console.log('TimerService: Starting work session in offline mode');
+      this.startSessionOffline('work', duration * 60);
+      this.workSessionCount++;
+      return;
+    }
+    
     const request: StartSessionRequest = {
       durationMinutes: duration
     };
@@ -102,8 +116,10 @@ export class TimerService {
       .pipe(
         catchError(error => {
           console.error('Failed to start work session:', error);
-          // Fallback to local-only session if API fails
-          this.startSessionLocal('work', duration * 60);
+          console.log('Switching to offline mode due to API failure');
+          // Switch to offline mode and fallback to offline session
+          this.offlineService.setOfflineMode(true);
+          this.startSessionOffline('work', duration * 60);
           this.workSessionCount++;
           return EMPTY;
         })
@@ -123,6 +139,16 @@ export class TimerService {
     const isLongBreak = this.workSessionCount >= settings.sessionsUntilLongBreak;
     const duration = isLongBreak ? settings.longBreakDuration : settings.breakDuration;
     
+    // Check if we're in offline mode - skip API call entirely
+    if (settings.offlineMode || this.offlineService.isOffline) {
+      console.log('TimerService: Starting break session in offline mode');
+      this.startSessionOffline('break', duration * 60);
+      if (isLongBreak) {
+        this.workSessionCount = 0; // Reset counter after long break
+      }
+      return;
+    }
+    
     const request: StartSessionRequest = {
       durationMinutes: duration
     };
@@ -131,8 +157,10 @@ export class TimerService {
       .pipe(
         catchError(error => {
           console.error('Failed to start break session:', error);
-          // Fallback to local-only session if API fails
-          this.startSessionLocal('break', duration * 60);
+          console.log('Switching to offline mode due to API failure');
+          // Switch to offline mode and fallback to offline session
+          this.offlineService.setOfflineMode(true);
+          this.startSessionOffline('break', duration * 60);
           if (isLongBreak) {
             this.workSessionCount = 0; // Reset counter after long break
           }
@@ -192,19 +220,63 @@ export class TimerService {
   }
 
   /**
+   * Start session in offline mode
+   * Creates a session and stores it in localStorage
+   */
+  private startSessionOffline(type: 'work' | 'break', duration: number): void {
+    const newSession: Session = {
+      id: Date.now(), // Use timestamp as ID for offline sessions
+      type,
+      startTime: new Date().toISOString(),
+      status: 'running',
+      durationMinutes: Math.floor(duration / 60),
+      createdAt: new Date().toISOString()
+    };
+
+    // Save to offline storage
+    this.offlineStorageService.saveActiveSession(newSession);
+
+    this.updateTimerState({
+      currentSession: newSession,
+      remainingTime: duration,
+      isRunning: true,
+      isPaused: false,
+      sessionType: type,
+      totalDuration: duration
+    });
+
+    this.startTimer();
+  }
+
+  /**
    * Pauses the currently running timer
    * Updates session status in backend and stops local timer
    */
   pauseTimer(): void {
     const currentState = this.timerStateSubject.value;
+    const settings = this.settingsSubject.value;
+    
     if (currentState.isRunning && currentState.currentSession) {
+      // Check if we're in offline mode - skip API call entirely
+      if (settings.offlineMode || this.offlineService.isOffline) {
+        console.log('TimerService: Pausing timer in offline mode');
+        this.updateTimerState({
+          isRunning: false,
+          isPaused: true
+        });
+        this.stopTimerInternal();
+        return;
+      }
+      
       if (currentState.currentSession.id > 0) {
         // Update backend session status (only if it has a valid backend ID)
         this.apiService.pauseSession(currentState.currentSession.id)
           .pipe(
             catchError(error => {
               console.error('Failed to pause session in backend:', error);
-              // Continue with local pause even if backend fails
+              console.log('Switching to offline mode due to API failure');
+              // Switch to offline mode and continue with local pause
+              this.offlineService.setOfflineMode(true);
               return EMPTY;
             })
           )
@@ -244,14 +316,29 @@ export class TimerService {
    */
   resumeTimer(): void {
     const currentState = this.timerStateSubject.value;
+    const settings = this.settingsSubject.value;
+    
     if (currentState.isPaused && currentState.currentSession) {
+      // Check if we're in offline mode - skip API call entirely
+      if (settings.offlineMode || this.offlineService.isOffline) {
+        console.log('TimerService: Resuming timer in offline mode');
+        this.updateTimerState({
+          isRunning: true,
+          isPaused: false
+        });
+        this.startTimer();
+        return;
+      }
+      
       if (currentState.currentSession.id > 0) {
         // Update backend session status (only if it has a valid backend ID)
         this.apiService.resumeSession(currentState.currentSession.id)
           .pipe(
             catchError(error => {
               console.error('Failed to resume session in backend:', error);
-              // Continue with local resume even if backend fails
+              console.log('Switching to offline mode due to API failure');
+              // Switch to offline mode and continue with local resume
+              this.offlineService.setOfflineMode(true);
               return EMPTY;
             })
           )
@@ -292,6 +379,33 @@ export class TimerService {
   stopTimer(): void {
     console.log('TimerService: stopTimer called');
     const currentState = this.timerStateSubject.value;
+    const settings = this.settingsSubject.value;
+    
+    // Check if we're in offline mode
+    if (settings.offlineMode || this.offlineService.isOffline) {
+      console.log('TimerService: Stopping timer in offline mode');
+      if (currentState.currentSession) {
+        // Save completed session to offline storage
+        const completedSession = {
+          ...currentState.currentSession,
+          status: 'completed' as const,
+          endTime: new Date().toISOString()
+        };
+        this.offlineStorageService.addSession(completedSession);
+        this.offlineStorageService.saveActiveSession(null);
+      }
+      
+      // Reset local state
+      this.updateTimerState({
+        isRunning: false,
+        isPaused: false,
+        remainingTime: 0,
+        currentSession: null
+      });
+      this.stopTimerInternal();
+      this.notifySessionChanged();
+      return;
+    }
     
     if (currentState.currentSession && currentState.currentSession.id > 0) {
       // Cancel session in backend (only if it has a valid backend ID)
@@ -299,7 +413,9 @@ export class TimerService {
         .pipe(
           catchError(error => {
             console.error('Failed to cancel session in backend:', error);
-            // Continue with local stop even if backend fails
+            console.log('Switching to offline mode due to API failure');
+            // Switch to offline mode and continue with local stop
+            this.offlineService.setOfflineMode(true);
             return EMPTY;
           })
         )
@@ -412,7 +528,9 @@ export class TimerService {
         .pipe(
           catchError(error => {
             console.error('Failed to complete session in backend:', error);
-            // Continue with local completion even if backend fails
+            console.log('Switching to offline mode due to API failure');
+            // Switch to offline mode and continue with local completion
+            this.offlineService.setOfflineMode(true);
             return EMPTY;
           })
         )
@@ -558,7 +676,8 @@ export class TimerService {
       sessionsUntilLongBreak: settings.sessionsUntilLongBreak,
       autoStartBreaks: settings.autoStartBreaks,
       autoStartPomodoros: settings.autoStartPomodoros,
-      soundEnabled: settings.soundEnabled
+      soundEnabled: settings.soundEnabled,
+      offlineMode: settings.offlineMode
     };
     
     this.settingsService.updateSettings(backendSettings).subscribe({

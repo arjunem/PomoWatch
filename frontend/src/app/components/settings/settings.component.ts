@@ -160,6 +160,31 @@ import { TimerService } from '../../services/timer.service';
               </div>
             </div>
 
+            <!-- Offline Mode Section -->
+            <div class="mb-8">
+              <h2 class="text-2xl font-semibold text-white mb-6 flex items-center">
+                <span class="text-3xl mr-3">📱</span>
+                Offline Mode
+              </h2>
+              
+              <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+                  <div class="flex-1">
+                    <h3 class="text-lg font-medium text-white mb-2">Enable Offline Mode</h3>
+                    <p class="text-sm text-gray-400">Run the app completely in browser without backend connection</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="offlineMode"
+                      [(ngModel)]="settings.offlineMode"
+                      class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-4 justify-end">
               <button
@@ -221,7 +246,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     sessionsUntilLongBreak: 4,
     autoStartBreaks: false,
     autoStartPomodoros: false,
-    soundEnabled: true
+    soundEnabled: true,
+    offlineMode: false
   };
 
   isLoading = false;

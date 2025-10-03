@@ -3,15 +3,33 @@
   <header class="bg-white shadow-sm border-b">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center py-4">
-        <h1 class="text-2xl font-bold text-gray-900">PomoWatch</h1>
         <div class="flex items-center space-x-4">
+          <h1 class="text-2xl font-bold text-gray-900">PomoWatch</h1>
+          <span class="text-sm text-gray-600">A pomodoro timer</span>
+        </div>
+        <div class="flex items-center space-x-4">
+          <!-- Offline Mode Toggle Switch -->
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-700">Online</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input 
+                #offlineToggle
+                type="checkbox" 
+                [checked]="isOffline" 
+                (change)="toggleOfflineMode(offlineToggle)"
+                class="sr-only peer"
+              >
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+            </label>
+            <span class="text-sm font-medium text-gray-700">Offline</span>
+          </div>
+          
           <button
             (click)="showSettings()"
             class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2">
             <span>⚙️</span>
             <span>Settings</span>
           </button>
-          <span class="text-sm text-gray-600">Pomodoro Timer</span>
         </div>
       </div>
     </div>
@@ -126,11 +144,11 @@
       </div>
     </div>
 
-    <!-- Session History -->
-    <app-session-history></app-session-history>
+    <!-- Session History (hidden in offline mode) -->
+    <app-session-history *ngIf="!(isOffline$ | async)"></app-session-history>
 
-    <!-- Today's Progress -->
-    <app-today-progress></app-today-progress>
+    <!-- Today's Progress (hidden in offline mode) -->
+    <app-today-progress *ngIf="!(isOffline$ | async)"></app-today-progress>
   </main>
 
   <!-- Settings Modal -->
@@ -139,6 +157,9 @@
       <app-settings (settingsSaved)="hideSettings()" (settingsCancelled)="hideSettings()"></app-settings>
     </div>
   </div>
+
+  <!-- Toast Notifications -->
+  <app-toast></app-toast>
 
   <!-- Router Outlet for future pages -->
   <router-outlet></router-outlet>

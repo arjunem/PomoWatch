@@ -158,17 +158,24 @@ Each step should be runnable **locally** and **in Docker**.
 * Allow user to configure work/break duration
 * Store settings in backend (SQLite)
 
-### Task 2: History Page Improvements
+### Task 2: Offline Mode Support
+
+* Add logic to run the App in offline mode (whole features in browser itself)
+* Add a setting to handle it / automatically switch this mode when API/internet not available
+* The session history and today's progress block should be hidden for offline mode
+* The mode should be mentioned near the settings in the title bar
+
+### Task 3: History Page Improvements
 
 * Filter sessions by date
 * Display charts (e.g., work vs. break time distribution)
 
-### Task 3: Notifications
+### Task 4: Notifications
 
 * Add desktop notifications at end of session
 * Optional sound alert
 
-### Task 4: CI/CD Setup
+### Task 5: CI/CD Setup
 
 * Add GitHub Actions workflow:
 

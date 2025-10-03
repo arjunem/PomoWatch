@@ -20,7 +20,8 @@ public class SettingsService : ISettingsService
         { "sessions_until_long_break", "4" },
         { "auto_start_breaks", "false" },
         { "auto_start_pomodoros", "false" },
-        { "sound_enabled", "true" }
+        { "sound_enabled", "true" },
+        { "offline_mode", "false" }
     };
 
     public SettingsService(ISettingsRepository settingsRepository)
@@ -44,6 +45,7 @@ public class SettingsService : ISettingsService
         settings.AutoStartBreaks = bool.Parse(await GetSettingValueAsync("auto_start_breaks", _defaultSettings["auto_start_breaks"]));
         settings.AutoStartPomodoros = bool.Parse(await GetSettingValueAsync("auto_start_pomodoros", _defaultSettings["auto_start_pomodoros"]));
         settings.SoundEnabled = bool.Parse(await GetSettingValueAsync("sound_enabled", _defaultSettings["sound_enabled"]));
+        settings.OfflineMode = bool.Parse(await GetSettingValueAsync("offline_mode", _defaultSettings["offline_mode"]));
 
         return settings;
     }
@@ -62,6 +64,7 @@ public class SettingsService : ISettingsService
         await SetSettingValueAsync("auto_start_breaks", settings.AutoStartBreaks.ToString().ToLower());
         await SetSettingValueAsync("auto_start_pomodoros", settings.AutoStartPomodoros.ToString().ToLower());
         await SetSettingValueAsync("sound_enabled", settings.SoundEnabled.ToString().ToLower());
+        await SetSettingValueAsync("offline_mode", settings.OfflineMode.ToString().ToLower());
 
         return settings;
     }
@@ -125,6 +128,7 @@ public class SettingsService : ISettingsService
         defaultSettings.AutoStartBreaks = bool.Parse(_defaultSettings["auto_start_breaks"]);
         defaultSettings.AutoStartPomodoros = bool.Parse(_defaultSettings["auto_start_pomodoros"]);
         defaultSettings.SoundEnabled = bool.Parse(_defaultSettings["sound_enabled"]);
+        defaultSettings.OfflineMode = bool.Parse(_defaultSettings["offline_mode"]);
 
         return defaultSettings;
     }

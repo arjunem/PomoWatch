@@ -59,4 +59,5 @@ public class PomodoroSettingsDto
     public bool AutoStartBreaks { get; set; } = false;
     public bool AutoStartPomodoros { get; set; } = false;
     public bool SoundEnabled { get; set; } = true;
+    public bool OfflineMode { get; set; } = false;
 }

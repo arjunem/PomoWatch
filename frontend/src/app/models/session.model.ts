@@ -46,4 +46,5 @@ export interface PomodoroSettings {
   autoStartBreaks: boolean;
   autoStartPomodoros: boolean;
   soundEnabled: boolean;
+  offlineMode: boolean;
 }

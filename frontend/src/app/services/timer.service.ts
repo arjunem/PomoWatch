@@ -63,7 +63,8 @@ export class TimerService {
 
   constructor(private apiService: ApiService) {
     this.loadSettings();
-    this.loadActiveSession();
+    // Defer API calls to avoid dependency injection issues during initialization
+    setTimeout(() => this.loadActiveSession(), 0);
   }
 
   // ===== TIMER CONTROLS =====

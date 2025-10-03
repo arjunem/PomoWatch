@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable, Subject, takeUntil } from 'rxjs';
 import { Session, TimerState } from '../../models/session.model';
@@ -204,7 +204,8 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
   constructor(
     private apiService: ApiService,
     private statsService: SessionStatsService,
-    private timerService: TimerService
+    private timerService: TimerService,
+    private cdr: ChangeDetectorRef
   ) {
     this.currentSession$ = this.timerService.currentSession$;
     this.todayStats$ = this.statsService.getTodayStats();
@@ -218,7 +219,10 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
         console.log('SessionHistoryComponent: Received session change notification');
-        this.loadRecentSessions();
+        // Add a small delay to ensure backend operations complete
+        setTimeout(() => {
+          this.loadRecentSessions();
+        }, 100);
       });
   }
 
@@ -249,19 +253,7 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
       });
     
     // Also refresh today's stats when sessions change
-    this.statsService.getTodayStats()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (stats) => {
-          this.todayStats$ = new Observable(observer => {
-            observer.next(stats);
-            observer.complete();
-          });
-        },
-        error: (error) => {
-          console.error('Failed to load today stats:', error);
-        }
-      });
+    this.refreshStatistics();
   }
 
   /**
@@ -278,6 +270,7 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
    * Resets the modal state
    */
   closeDeleteModal(): void {
+    // Only allow closing if not currently deleting
     if (this.deletingSessionId === null) {
       this.showDeleteModal = false;
       this.sessionToDelete = null;
@@ -297,13 +290,25 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          console.log(`Session ${this.sessionToDelete!.id} deleted successfully`);
-          // Refresh the entire session list to ensure consistency
-          this.loadRecentSessions();
+          const deletedSessionId = this.sessionToDelete!.id;
+          console.log(`Session ${deletedSessionId} deleted successfully`);
+          
+          // Remove the deleted session from the local array immediately for better UX
+          this.recentSessions = this.recentSessions.filter(session => session.id !== deletedSessionId);
+          
           // Close modal and reset state
           this.showDeleteModal = false;
           this.sessionToDelete = null;
           this.deletingSessionId = null;
+          
+          // Trigger change detection to update the UI
+          this.cdr.detectChanges();
+          
+          // Refresh the entire session list to ensure consistency
+          this.loadRecentSessions();
+          
+          // Refresh statistics after deletion
+          this.refreshStatistics();
         },
         error: (error) => {
           console.error('Failed to delete session:', error);
@@ -407,6 +412,8 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
             this.recentSessions = [];
             // Refresh the session list to show empty state
             this.loadRecentSessions();
+            // Refresh statistics after clearing all
+            this.refreshStatistics();
             this.isClearing = false;
           },
           error: (error) => {
@@ -416,5 +423,28 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
           }
         });
     }
+  }
+
+  /**
+   * Refreshes the statistics display
+   * Called after session operations to ensure real-time updates
+   */
+  private refreshStatistics(): void {
+    console.log('SessionHistoryComponent: Refreshing statistics');
+    this.statsService.getTodayStats()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (stats) => {
+          this.todayStats$ = new Observable(observer => {
+            observer.next(stats);
+            observer.complete();
+          });
+          // Trigger change detection to update the UI
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Failed to refresh statistics:', error);
+        }
+      });
   }
 }

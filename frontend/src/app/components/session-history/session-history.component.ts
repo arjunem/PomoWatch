@@ -42,7 +42,7 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
           <!-- Clear All Sessions Button -->
           <button
             *ngIf="!isCollapsed && recentSessions.length > 0"
-            (click)="clearAllSessions()"
+            (click)="openClearAllModal()"
             [disabled]="isClearing"
             class="flex items-center space-x-1 px-3 py-1 text-sm bg-red-100 text-red-700 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 rounded-lg transition-colors duration-200">
             <span>🗑️</span>
@@ -102,27 +102,28 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
         </div>
       </div>
       </div>
+    </div>
 
-      <!-- Today's Stats - Separate section below Session History -->
-      <div *ngIf="todayStats$ | async as stats" class="bg-white rounded-xl shadow-lg p-6 mt-6">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">Today's Progress</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="text-center p-3 bg-green-50 rounded-lg">
-            <div class="text-2xl font-bold text-green-600">{{ stats.totalWorkTime }}</div>
-            <div class="text-sm text-gray-600">Work Minutes</div>
-          </div>
-          <div class="text-center p-3 bg-blue-50 rounded-lg">
-            <div class="text-2xl font-bold text-blue-600">{{ stats.totalBreakTime }}</div>
-            <div class="text-sm text-gray-600">Break Minutes</div>
-          </div>
-          <div class="text-center p-3 bg-purple-50 rounded-lg">
-            <div class="text-2xl font-bold text-purple-600">{{ stats.completedSessions }}</div>
-            <div class="text-sm text-gray-600">Completed</div>
-          </div>
-          <div class="text-center p-3 bg-orange-50 rounded-lg">
-            <div class="text-2xl font-bold text-orange-600">{{ stats.totalSessions }}</div>
-            <div class="text-sm text-gray-600">Total Sessions</div>
-          </div>
+    <!-- Today's Stats - Always visible section -->
+    <div *ngIf="todayStats$ | async as stats" class="bg-white rounded-xl shadow-lg p-6 mt-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Today's Progress</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="text-center p-3 bg-green-50 rounded-lg">
+          <div class="text-2xl font-bold text-green-600">{{ stats.totalWorkTime }}</div>
+          <div class="text-sm text-gray-600">Work Minutes</div>
+        </div>
+        <div class="text-center p-3 bg-blue-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">{{ stats.totalBreakTime }}</div>
+          <div class="text-sm text-gray-600">Break Minutes</div>
+        </div>
+        <div class="text-center p-3 bg-purple-50 rounded-lg">
+          <div class="text-2xl font-bold text-purple-600">{{ stats.completedSessions }}</div>
+          <div class="text-sm text-gray-600">Completed</div>
+        </div>
+        <div class="text-center p-3 bg-orange-50 rounded-lg">
+          <div class="text-2xl font-bold text-orange-600">{{ stats.totalSessions }}</div>
+          <div class="text-sm text-gray-600">Total Sessions</div>
+        </div>
       </div>
     </div>
 
@@ -184,6 +185,69 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
         </div>
       </div>
     </div>
+
+    <!-- Beautiful Metallic Clear All Confirmation Modal -->
+    <div *ngIf="showClearAllModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeClearAllModal()">
+      <div class="bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-2xl shadow-2xl border border-gray-600 p-8 max-w-md mx-4 transform transition-all duration-300 scale-100" (click)="$event.stopPropagation()">
+        <!-- Modal Header -->
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-red-700 rounded-full flex items-center justify-center shadow-lg">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-white mb-2">Clear All Sessions</h3>
+          <p class="text-gray-300">This will delete all completed sessions</p>
+        </div>
+
+        <!-- Session Details -->
+        <div class="bg-gray-700 rounded-xl p-4 mb-6 border border-gray-600">
+          <div class="flex items-center space-x-3 mb-3">
+            <span class="text-2xl">📊</span>
+            <div>
+              <h4 class="text-lg font-semibold text-white">Session History</h4>
+              <p class="text-gray-300 text-sm">{{ recentSessions.length }} sessions will be cleared</p>
+            </div>
+          </div>
+          <div class="text-sm text-gray-300">
+            <div class="flex items-center space-x-2 mb-2">
+              <span class="text-green-400">✓</span>
+              <span>Current running session will be preserved</span>
+            </div>
+            <div class="flex items-center space-x-2 mb-2">
+              <span class="text-yellow-400">⚠</span>
+              <span>Completed and cancelled sessions will be deleted</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-blue-400">ℹ</span>
+              <span>Sessions are recoverable from database</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex space-x-4">
+          <button
+            (click)="closeClearAllModal()"
+            class="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+            Cancel
+          </button>
+          <button
+            (click)="confirmClearAll()"
+            [disabled]="isClearing"
+            class="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+            <span *ngIf="!isClearing">Clear All Sessions</span>
+            <span *ngIf="isClearing" class="flex items-center justify-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Clearing...
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
   `
 })
 export class SessionHistoryComponent implements OnInit, OnDestroy {
@@ -200,6 +264,9 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
   deletingSessionId: number | null = null;
   showDeleteModal = false;
   sessionToDelete: Session | null = null;
+  
+  // Clear all sessions states
+  showClearAllModal = false;
 
   constructor(
     private apiService: ApiService,
@@ -219,10 +286,10 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
         console.log('SessionHistoryComponent: Received session change notification');
-        // Add a small delay to ensure backend operations complete
-        setTimeout(() => {
-          this.loadRecentSessions();
-        }, 100);
+        // Load sessions immediately since timer service waits for API completion
+        this.loadRecentSessions();
+        // Force change detection to update the UI
+        this.cdr.detectChanges();
       });
   }
 
@@ -246,6 +313,8 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
           this.recentSessions = sessions
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
             .slice(0, 10);
+          // Force change detection to update the UI
+          this.cdr.detectChanges();
         },
         error: (error) => {
           console.error('Failed to load recent sessions:', error);
@@ -392,37 +461,52 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Clears all sessions with confirmation dialog
-   * Uses soft delete to maintain data integrity
+   * Opens the clear all sessions confirmation modal
    */
-  clearAllSessions(): void {
-    if (this.isClearing) return;
+  openClearAllModal(): void {
+    this.showClearAllModal = true;
+  }
 
-    const confirmationMessage = `Are you sure you want to clear all ${this.recentSessions.length} sessions?\n\nThis action cannot be undone, but sessions will be recoverable from the database if needed.`;
-    
-    if (confirm(confirmationMessage)) {
-      this.isClearing = true;
-      
-      this.apiService.clearAllSessions()
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (response) => {
-            console.log('All sessions cleared:', response);
-            // Clear local sessions list
-            this.recentSessions = [];
-            // Refresh the session list to show empty state
-            this.loadRecentSessions();
-            // Refresh statistics after clearing all
-            this.refreshStatistics();
-            this.isClearing = false;
-          },
-          error: (error) => {
-            console.error('Failed to clear sessions:', error);
-            this.isClearing = false;
-            alert('Failed to clear sessions. Please try again.');
-          }
-        });
+  /**
+   * Closes the clear all sessions confirmation modal
+   */
+  closeClearAllModal(): void {
+    // Only allow closing if not currently clearing
+    if (!this.isClearing) {
+      this.showClearAllModal = false;
     }
+  }
+
+  /**
+   * Confirms and executes the clear all sessions operation
+   * Uses the beautiful modal for confirmation
+   */
+  confirmClearAll(): void {
+    if (this.isClearing) return;
+    
+    this.isClearing = true;
+    
+    this.apiService.clearAllSessions()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          console.log('All sessions cleared:', response);
+          // Clear local sessions list
+          this.recentSessions = [];
+          // Close modal and reset state
+          this.showClearAllModal = false;
+          this.isClearing = false;
+          // Refresh the session list to show empty state
+          this.loadRecentSessions();
+          // Refresh statistics after clearing all
+          this.refreshStatistics();
+        },
+        error: (error) => {
+          console.error('Failed to clear sessions:', error);
+          this.isClearing = false;
+          alert('Failed to clear sessions. Please try again.');
+        }
+      });
   }
 
   /**

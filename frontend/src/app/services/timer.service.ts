@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable, interval, Subscription, EMPTY } from 'rxjs
 import { map, takeWhile, catchError } from 'rxjs/operators';
 import { TimerState, Session, PomodoroSettings, StartSessionRequest } from '../models/session.model';
 import { ApiService } from './api.service';
+import { SettingsService, PomodoroSettingsDto } from './settings.service';
 import { parseUtcDate, calculateElapsedSeconds, minutesToSeconds } from '../utils/date.utils';
 
 @Injectable({
@@ -61,8 +62,25 @@ export class TimerService {
     map(state => this.formatTime(state.remainingTime))
   );
 
-  constructor(private apiService: ApiService) {
+  constructor(
+    private apiService: ApiService,
+    private settingsService: SettingsService
+  ) {
     this.loadSettings();
+    // Listen for settings changes and update timer service
+    this.settingsService.settings$.subscribe(settings => {
+      const frontendSettings: PomodoroSettings = {
+        workDuration: settings.workDuration,
+        breakDuration: settings.breakDuration,
+        longBreakDuration: settings.longBreakDuration,
+        sessionsUntilLongBreak: settings.sessionsUntilLongBreak,
+        autoStartBreaks: settings.autoStartBreaks,
+        autoStartPomodoros: settings.autoStartPomodoros,
+        soundEnabled: settings.soundEnabled
+      };
+      this.settingsSubject.next(frontendSettings);
+      console.log('Settings updated in timer service:', frontendSettings);
+    });
     // Defer API calls to avoid dependency injection issues during initialization
     setTimeout(() => this.loadActiveSession(), 0);
   }
@@ -287,7 +305,7 @@ export class TimerService {
           })
         )
         .subscribe({
-          next: () => {
+          next: (cancelledSession) => {
             // Reset local state
             this.updateTimerState({
               isRunning: false,
@@ -296,6 +314,7 @@ export class TimerService {
               currentSession: null
             });
             this.stopTimerInternal();
+            // Notify immediately after successful backend operation
             this.notifySessionChanged(); // Notify that sessions have changed
           },
           error: () => {
@@ -307,6 +326,7 @@ export class TimerService {
               currentSession: null
             });
             this.stopTimerInternal();
+            // Notify immediately even on error since we stopped locally
             this.notifySessionChanged(); // Notify that sessions have changed
           }
         });
@@ -319,6 +339,7 @@ export class TimerService {
         currentSession: null
       });
       this.stopTimerInternal();
+      // Notify immediately for local-only sessions
       this.notifySessionChanged(); // Notify that sessions have changed
     }
   }
@@ -454,14 +475,17 @@ export class TimerService {
 
   /**
    * Handles auto-starting the next session based on current session type and settings
+   * Waits for current session completion before starting the next session
    */
   private handleAutoStartNextSession(currentSessionType: 'work' | 'break'): void {
     const settings = this.settingsSubject.value;
     
     if (currentSessionType === 'work' && settings.autoStartBreaks) {
-      setTimeout(() => this.startBreakSession(), 1000);
+      // Start break session after current session is completed
+      this.startBreakSession();
     } else if (currentSessionType === 'break' && settings.autoStartPomodoros) {
-      setTimeout(() => this.startWorkSession(), 1000);
+      // Start work session after current session is completed
+      this.startWorkSession();
     }
   }
 
@@ -523,26 +547,55 @@ export class TimerService {
   }
 
   /**
-   * Loads settings from localStorage on service initialization
+   * Loads settings from backend on service initialization
    * Falls back to default settings if loading fails
    */
   private loadSettings(): void {
-    const saved = localStorage.getItem('pomodoro-settings');
-    if (saved) {
-      try {
-        const settings = JSON.parse(saved);
-        this.settingsSubject.next(settings);
-      } catch (error) {
-        console.error('Failed to load settings:', error);
+    this.settingsService.getSettings().subscribe({
+      next: (settings) => {
+        // Convert backend DTO to frontend interface
+        const frontendSettings: PomodoroSettings = {
+          workDuration: settings.workDuration,
+          breakDuration: settings.breakDuration,
+          longBreakDuration: settings.longBreakDuration,
+          sessionsUntilLongBreak: settings.sessionsUntilLongBreak,
+          autoStartBreaks: settings.autoStartBreaks,
+          autoStartPomodoros: settings.autoStartPomodoros,
+          soundEnabled: settings.soundEnabled
+        };
+        this.settingsSubject.next(frontendSettings);
+        console.log('Settings loaded from backend:', frontendSettings);
+      },
+      error: (error) => {
+        console.error('Failed to load settings from backend:', error);
+        // Keep default settings if loading fails
       }
-    }
+    });
   }
 
   /**
-   * Saves current settings to localStorage for persistence
+   * Saves current settings to backend for persistence
    */
   private saveSettings(settings: PomodoroSettings): void {
-    localStorage.setItem('pomodoro-settings', JSON.stringify(settings));
+    // Convert frontend interface to backend DTO
+    const backendSettings: PomodoroSettingsDto = {
+      workDuration: settings.workDuration,
+      breakDuration: settings.breakDuration,
+      longBreakDuration: settings.longBreakDuration,
+      sessionsUntilLongBreak: settings.sessionsUntilLongBreak,
+      autoStartBreaks: settings.autoStartBreaks,
+      autoStartPomodoros: settings.autoStartPomodoros,
+      soundEnabled: settings.soundEnabled
+    };
+    
+    this.settingsService.updateSettings(backendSettings).subscribe({
+      next: () => {
+        console.log('Settings saved to backend');
+      },
+      error: (error) => {
+        console.error('Failed to save settings to backend:', error);
+      }
+    });
   }
 
   // ===== UTILITY METHODS =====

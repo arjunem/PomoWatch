@@ -36,6 +36,8 @@ builder.Services.AddDbContext<PomodoroDbContext>(options =>
 // Register Repository and Service layers
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 builder.Services.AddScoped<ISessionService, SessionService>();
+builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
+builder.Services.AddScoped<ISettingsService, SettingsService>();
 
 var app = builder.Build();
 

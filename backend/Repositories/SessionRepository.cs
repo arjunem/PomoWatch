@@ -73,8 +73,9 @@ public class SessionRepository : ISessionRepository
 
     public async Task<bool> SoftDeleteAllSessionsAsync()
     {
+        // Get all sessions except the current running session
         var sessions = await _context.Sessions
-            .Where(s => !s.IsDeleted)
+            .Where(s => !s.IsDeleted && s.Status != "running")
             .ToListAsync();
 
         if (!sessions.Any())

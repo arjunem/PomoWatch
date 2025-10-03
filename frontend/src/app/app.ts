@@ -4,12 +4,14 @@ import { RouterOutlet } from '@angular/router';
 import { Observable, Subject, takeUntil } from 'rxjs';
 import { TimerService } from './services/timer.service';
 import { ApiService } from './services/api.service';
+import { SettingsService } from './services/settings.service';
 import { Session, TimerState, PomodoroSettings } from './models/session.model';
 import { SessionHistoryComponent } from './components/session-history/session-history.component';
+import { SettingsComponent } from './components/settings/settings.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, SessionHistoryComponent],
+  imports: [RouterOutlet, CommonModule, SessionHistoryComponent, SettingsComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -26,10 +28,14 @@ export class App implements OnInit, OnDestroy {
 
   // Settings observable for user preferences
   settings$: Observable<PomodoroSettings>;
+  
+  // Settings modal state
+  showSettingsModal = false;
 
   constructor(
     private timerService: TimerService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private settingsService: SettingsService
   ) {
     // Initialize observable streams from timer service
     this.timerState$ = this.timerService.timerState$;
@@ -114,5 +120,21 @@ export class App implements OnInit, OnDestroy {
   resetTimer(): void {
     console.log('App: resetTimer called');
     this.timerService.resetTimer();
+  }
+
+  // ===== SETTINGS METHODS =====
+
+  /**
+   * Shows the settings modal
+   */
+  showSettings(): void {
+    this.showSettingsModal = true;
+  }
+
+  /**
+   * Hides the settings modal
+   */
+  hideSettings(): void {
+    this.showSettingsModal = false;
   }
 }

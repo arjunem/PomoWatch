@@ -87,7 +87,7 @@
           <!-- Start Work Button -->
           <button
             (click)="startWorkSession()"
-            [disabled]="(isRunning$ | async)"
+            [disabled]="(hasActiveSession$ | async)"
             class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center space-x-2"
           >
             <span>🎯</span>
@@ -97,7 +97,7 @@
           <!-- Start Break Button -->
           <button
             (click)="startBreakSession()"
-            [disabled]="(isRunning$ | async)"
+            [disabled]="(hasActiveSession$ | async)"
             class="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center space-x-2"
           >
             <span>☕</span>
@@ -155,6 +155,54 @@
   <div *ngIf="showSettingsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="hideSettings()">
     <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
       <app-settings (settingsSaved)="hideSettings()" (settingsCancelled)="hideSettings()"></app-settings>
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div *ngIf="showResetConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="hideResetConfirmation()">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-t-2xl">
+        <div class="flex items-center space-x-3">
+          <div class="flex-shrink-0">
+            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+              <span class="text-xl">⚠️</span>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">Reset Timer</h3>
+            <p class="text-red-100 text-sm">This will stop your current session</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6">
+        <div class="mb-6">
+          <p class="text-gray-700 text-center">
+            You have an active session. Resetting the timer will stop the current session and reset the timer to its original duration.
+          </p>
+          <p class="text-gray-500 text-sm text-center mt-2">
+            Are you sure you want to continue?
+          </p>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="flex space-x-3">
+          <button
+            (click)="hideResetConfirmation()"
+            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium transition-colors duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            (click)="confirmReset()"
+            class="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg font-medium transition-colors duration-200"
+          >
+            Reset Timer
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 

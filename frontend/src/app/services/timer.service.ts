@@ -6,6 +6,7 @@ import { ApiService } from './api.service';
 import { SettingsService, PomodoroSettingsDto } from './settings.service';
 import { OfflineService } from './offline.service';
 import { OfflineStorageService } from './offline-storage.service';
+import { ToastService } from './toast.service';
 import { parseUtcDate, calculateElapsedSeconds, minutesToSeconds } from '../utils/date.utils';
 
 @Injectable({
@@ -50,6 +51,14 @@ export class TimerService {
     map(state => state.isRunning)
   );
 
+  public isPaused$: Observable<boolean> = this.timerState$.pipe(
+    map(state => state.isPaused)
+  );
+
+  public hasActiveSession$: Observable<boolean> = this.timerState$.pipe(
+    map(state => state.isRunning || state.isPaused)
+  );
+
   public currentSession$: Observable<Session | null> = this.timerState$.pipe(
     map(state => state.currentSession)
   );
@@ -69,7 +78,8 @@ export class TimerService {
     private apiService: ApiService,
     private settingsService: SettingsService,
     private offlineService: OfflineService,
-    private offlineStorageService: OfflineStorageService
+    private offlineStorageService: OfflineStorageService,
+    private toastService: ToastService
   ) {
     // Listen for settings changes and update timer service
     this.settingsService.settings$.subscribe(settings => {
@@ -116,6 +126,13 @@ export class TimerService {
       .pipe(
         catchError(error => {
           console.error('Failed to start work session:', error);
+          
+          // Check if it's the "active session" error
+          if (error.message && error.message.includes('There is already an active session')) {
+            this.toastService.warning('Please complete or cancel the current session first.');
+            return EMPTY;
+          }
+          
           console.log('Switching to offline mode due to API failure');
           // Switch to offline mode and fallback to offline session
           this.offlineService.setOfflineMode(true);
@@ -157,6 +174,13 @@ export class TimerService {
       .pipe(
         catchError(error => {
           console.error('Failed to start break session:', error);
+          
+          // Check if it's the "active session" error
+          if (error.message && error.message.includes('There is already an active session')) {
+            this.toastService.warning('Please complete or cancel the current session first.');
+            return EMPTY;
+          }
+          
           console.log('Switching to offline mode due to API failure');
           // Switch to offline mode and fallback to offline session
           this.offlineService.setOfflineMode(true);

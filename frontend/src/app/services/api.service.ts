@@ -68,7 +68,10 @@ export class ApiService {
    * Creates a new session record in the backend
    */
   startWorkSession(request: StartSessionRequest): Observable<Session> {
-    return this.http.post<Session>(`${this.baseUrl}/sessions/start-work`, request);
+    return this.http.post<Session>(`${this.baseUrl}/sessions/start-work`, request)
+      .pipe(
+        catchError(error => this.handleError(error))
+      );
   }
 
   /**
@@ -76,7 +79,10 @@ export class ApiService {
    * Creates a new break session record in the backend
    */
   startBreakSession(request: StartSessionRequest): Observable<Session> {
-    return this.http.post<Session>(`${this.baseUrl}/sessions/start-break`, request);
+    return this.http.post<Session>(`${this.baseUrl}/sessions/start-break`, request)
+      .pipe(
+        catchError(error => this.handleError(error))
+      );
   }
 
   /**
@@ -171,7 +177,8 @@ export class ApiService {
       // Server-side error
       switch (error.status) {
         case 400:
-          errorMessage = error.error?.message || 'Bad Request';
+          // Extract message from error response, fallback to generic message
+          errorMessage = error.error?.message || error.error?.title || 'Bad Request';
           break;
         case 401:
           errorMessage = 'Unauthorized';

@@ -27,6 +27,8 @@ export class App implements OnInit, OnDestroy {
   timerState$: Observable<TimerState>;
   remainingTime$: Observable<string>;
   isRunning$: Observable<boolean>;
+  isPaused$: Observable<boolean>;
+  hasActiveSession$: Observable<boolean>;
   progressPercentage$: Observable<number>;
   currentSession$: Observable<Session | null>;
 
@@ -39,6 +41,9 @@ export class App implements OnInit, OnDestroy {
   
   // Settings modal state
   showSettingsModal = false;
+  
+  // Reset confirmation modal state
+  showResetConfirmationModal = false;
 
   constructor(
     private timerService: TimerService,
@@ -52,6 +57,8 @@ export class App implements OnInit, OnDestroy {
     this.timerState$ = this.timerService.timerState$;
     this.remainingTime$ = this.timerService.timeDisplay$;
     this.isRunning$ = this.timerService.isRunning$;
+    this.isPaused$ = this.timerService.isPaused$;
+    this.hasActiveSession$ = this.timerService.hasActiveSession$;
     this.progressPercentage$ = this.timerService.progressPercentage$;
     this.currentSession$ = this.timerService.currentSession$;
     this.settings$ = this.timerService.settings$;
@@ -230,11 +237,20 @@ export class App implements OnInit, OnDestroy {
 
   /**
    * Resets the timer to its original duration
-   * Delegate to timer service for implementation
+   * Shows confirmation dialog if there's an active or paused session
    */
   resetTimer(): void {
     console.log('App: resetTimer called');
-    this.timerService.resetTimer();
+    
+    // Check if there's an active or paused session
+    const currentState = this.timerService.currentState;
+    if (currentState.isRunning || currentState.isPaused) {
+      // Show confirmation modal
+      this.showResetConfirmationModal = true;
+    } else {
+      // No active session, proceed with reset
+      this.timerService.resetTimer();
+    }
   }
 
   // ===== SETTINGS METHODS =====
@@ -251,5 +267,37 @@ export class App implements OnInit, OnDestroy {
    */
   hideSettings(): void {
     this.showSettingsModal = false;
+  }
+
+  // ===== RESET CONFIRMATION METHODS =====
+
+  /**
+   * Hides the reset confirmation modal
+   */
+  hideResetConfirmation(): void {
+    this.showResetConfirmationModal = false;
+  }
+
+  /**
+   * Confirms the reset operation
+   * Stops the current session and then resets the timer
+   */
+  confirmReset(): void {
+    console.log('App: confirmReset called');
+    
+    // First stop the current session if it's running or paused
+    const currentState = this.timerService.currentState;
+    if (currentState.isRunning || currentState.isPaused) {
+      this.timerService.stopTimer();
+    }
+    
+    // Then reset the timer
+    this.timerService.resetTimer();
+    
+    // Hide the confirmation modal
+    this.showResetConfirmationModal = false;
+    
+    // Show success message
+    this.toastService.success('Timer reset successfully');
   }
 }

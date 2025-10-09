@@ -1,17 +1,34 @@
 # PomoWatch - Pomodoro Timer Application
 
-A full-stack Pomodoro timer application built with Angular and .NET 8, fully containerized with Docker.
+[![Docker Build and Publish](https://github.com/arjunem/PomoWatch/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/arjunem/PomoWatch/actions/workflows/docker-publish.yml)
+[![Backend](https://img.shields.io/badge/backend-.NET%208-512BD4?logo=dotnet)](https://github.com/arjunem/PomoWatch/pkgs/container/pomowatch%2Fbackend)
+[![Frontend](https://img.shields.io/badge/frontend-Angular%2020-DD0031?logo=angular)](https://github.com/arjunem/PomoWatch/pkgs/container/pomowatch%2Ffrontend)
+
+A full-stack Pomodoro timer application built with Angular and .NET 8, fully containerized with Docker and automatically deployed to GitHub Container Registry.
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Docker Desktop installed
-- Docker Compose installed
+### Option 1: Use Pre-built Images (Recommended)
 
-### Run the Application
+Pull and run the latest images from GitHub Container Registry:
 
 ```bash
-# Start the entire application
+# Pull latest images
+docker pull ghcr.io/arjunem/pomowatch/backend:latest
+docker pull ghcr.io/arjunem/pomowatch/frontend:latest
+
+# Run with production compose file
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### Option 2: Build Locally
+
+Build from source code:
+
+```bash
+# Prerequisites: Docker Desktop and Docker Compose installed
+
+# Build and start the entire application
 docker-compose up --build
 
 # Or run in detached mode
@@ -172,16 +189,55 @@ SQLite database is stored in `./data/pomodoro.db` and is mounted as a Docker vol
 
 ## 🐳 Docker Images
 
+**Local Images:**
 - `pomodoro-backend` - .NET 8 Web API
 - `pomodoro-frontend` - Angular + Nginx
 
+**GitHub Container Registry (Production):**
+- `ghcr.io/arjunem/pomowatch/backend:latest` - Backend API
+- `ghcr.io/arjunem/pomowatch/frontend:latest` - Frontend App
+
+View packages: [Backend](https://github.com/arjunem/PomoWatch/pkgs/container/pomowatch%2Fbackend) | [Frontend](https://github.com/arjunem/PomoWatch/pkgs/container/pomowatch%2Ffrontend)
+
+## 🚢 Deployment
+
+This project uses GitHub Actions for automated CI/CD to GitHub Container Registry.
+
+### Automated Deployment
+
+Images are automatically built and published when:
+- ✅ Code is pushed to `main` branch → `latest` tag
+- ✅ Version tags are created (e.g., `v1.0.0`) → versioned tags
+- ✅ Pull requests are opened → build only (testing)
+
+### Deployment Features
+
+- ✅ Multi-platform support (linux/amd64, linux/arm64)
+- ✅ Automated security scanning with Trivy
+- ✅ Docker layer caching for faster builds
+- ✅ Health checks for containers
+- ✅ Semantic versioning
+
+### Quick Deploy
+
+```bash
+# Pull latest images
+docker-compose -f docker-compose.prod.yml pull
+
+# Start production deployment
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## 📄 License
 
-This is a learning project created as part of Phase 1 development.
+This is a learning project created as part of a full-stack development exercise.
 
-## 🎯 Next Steps (Future Phases)
+## 🎯 Project Status
 
-- **Phase 2:** Backend Core (Session management, repository pattern)
-- **Phase 3:** Frontend Core (Timer UI, API integration, history)
-- **Phase 4:** Polish & Extras (Settings, notifications, CI/CD)
+- ✅ **Phase 1:** Setup (Docker, Infrastructure) - COMPLETED
+- ✅ **Phase 2:** Backend Core (Session management, repository pattern) - COMPLETED
+- ✅ **Phase 3:** Frontend Core (Timer UI, API integration, history) - COMPLETED
+- ✅ **Phase 4:** Polish & Extras (Settings, notifications, CI/CD) - COMPLETED
 

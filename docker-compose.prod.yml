@@ -1,0 +1,182 @@
+# ===============================================================================
+# Production Docker Compose Configuration
+# ===============================================================================
+# This compose file uses pre-built Docker images from GitHub Container Registry
+# instead of building them locally. This is the recommended approach for 
+# production deployments.
+#
+# Usage:
+#   Start:   docker-compose -f docker-compose.prod.yml up -d
+#   Stop:    docker-compose -f docker-compose.prod.yml down
+#   Logs:    docker-compose -f docker-compose.prod.yml logs -f
+#   Update:  docker-compose -f docker-compose.prod.yml pull && 
+#            docker-compose -f docker-compose.prod.yml up -d
+#
+# Features:
+#   - Pre-built images from GHCR (faster deployment)
+#   - Health checks for both services
+#   - Automatic container restart
+#   - Persistent database storage
+#   - Production environment configuration
+# ===============================================================================
+
+version: '3.8'
+
+# ===============================================================================
+# SERVICES
+# ===============================================================================
+services:
+  # =============================================================================
+  # Backend Service (.NET 8 Web API)
+  # =============================================================================
+  backend:
+    # Use pre-built image from GitHub Container Registry
+    # This image is automatically built and published by GitHub Actions
+    image: ghcr.io/arjunem/pomowatch/backend:latest
+    
+    # Container name (easier to identify and manage)
+    container_name: pomodoro-backend-prod
+    
+    # Port mapping: host:container
+    # Maps host port 5001 to container port 5000
+    # Access via: http://localhost:5001
+    ports:
+      - "5001:5000"
+    
+    # Volume mounts for persistent data
+    # Maps ./data directory on host to /app/data in container
+    # SQLite database will persist across container restarts
+    volumes:
+      - ./data:/app/data
+    
+    # Environment variables for .NET application
+    environment:
+      # Run in Production mode (optimized performance, less verbose logging)
+      - ASPNETCORE_ENVIRONMENT=Production
+      
+      # Listen on all network interfaces (required for Docker)
+      # 0.0.0.0 allows connections from outside the container
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+      
+      # Database connection string
+      # Points to SQLite database in the mounted volume
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/pomodoro.db
+    
+    # Network configuration
+    # Connects to shared network for inter-service communication
+    networks:
+      - pomodoro-net
+    
+    # Restart policy
+    # Automatically restart container unless explicitly stopped
+    # Helps recover from crashes or server reboots
+    restart: unless-stopped
+    
+    # Health check configuration
+    # Docker will periodically check if the service is healthy
+    healthcheck:
+      # Command to check health (HTTP GET to health endpoint)
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      
+      # Check every 30 seconds
+      interval: 30s
+      
+      # Wait up to 10 seconds for response
+      timeout: 10s
+      
+      # Mark as unhealthy after 3 consecutive failures
+      retries: 3
+      
+      # Wait 40 seconds before starting health checks (allows app to initialize)
+      start_period: 40s
+
+  # =============================================================================
+  # Frontend Service (Angular + Nginx)
+  # =============================================================================
+  frontend:
+    # Use pre-built image from GitHub Container Registry
+    image: ghcr.io/arjunem/pomowatch/frontend:latest
+    
+    # Container name
+    container_name: pomodoro-frontend-prod
+    
+    # Port mapping: host:container
+    # Maps host port 4201 to container port 80 (nginx default)
+    # Access via: http://localhost:4201
+    ports:
+      - "4201:80"
+    
+    # Service dependencies
+    # Ensures backend is healthy before starting frontend
+    depends_on:
+      backend:
+        # Wait for backend health check to pass before starting
+        condition: service_healthy
+    
+    # Network configuration
+    networks:
+      - pomodoro-net
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Health check configuration
+    healthcheck:
+      # Check if nginx is responding (using wget)
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      
+      # Check every 30 seconds
+      interval: 30s
+      
+      # Wait up to 10 seconds for response
+      timeout: 10s
+      
+      # Mark as unhealthy after 3 consecutive failures
+      retries: 3
+      
+      # Wait 40 seconds before starting health checks
+      start_period: 40s
+
+# ===============================================================================
+# NETWORKS
+# ===============================================================================
+# Shared network for inter-service communication
+networks:
+  pomodoro-net:
+    # Bridge driver allows containers to communicate with each other
+    # Frontend can reach backend using service name: http://backend:5000
+    driver: bridge
+
+# ===============================================================================
+# VOLUMES
+# ===============================================================================
+# Named volumes for persistent data
+volumes:
+  # Database volume (defined but using bind mount above)
+  # This allows data to persist even if containers are removed
+  data:
+
+# ===============================================================================
+# DEPLOYMENT NOTES
+# ===============================================================================
+# 1. First time setup:
+#    mkdir -p data
+#    docker-compose -f docker-compose.prod.yml pull
+#    docker-compose -f docker-compose.prod.yml up -d
+#
+# 2. Update to latest version:
+#    docker-compose -f docker-compose.prod.yml pull
+#    docker-compose -f docker-compose.prod.yml up -d
+#
+# 3. View logs:
+#    docker-compose -f docker-compose.prod.yml logs -f
+#
+# 4. Check status:
+#    docker-compose -f docker-compose.prod.yml ps
+#
+# 5. Stop services:
+#    docker-compose -f docker-compose.prod.yml down
+#
+# 6. Stop and remove data (⚠️ WARNING: Deletes database):
+#    docker-compose -f docker-compose.prod.yml down -v
+# ===============================================================================

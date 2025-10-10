@@ -49,10 +49,11 @@ env:
   # GitHub Container Registry URL
   REGISTRY: ghcr.io
   
-  # Image names (automatically uses repository owner and name)
+  # Image names (automatically uses repository owner and name, converted to lowercase)
   # Format: ghcr.io/{owner}/{repo}/backend
-  BACKEND_IMAGE_NAME: ${{ github.repository }}/backend
-  FRONTEND_IMAGE_NAME: ${{ github.repository }}/frontend
+  # Note: Docker image names must be lowercase
+  BACKEND_IMAGE_NAME: ${{ github.repository_owner }}/pomowatch/backend
+  FRONTEND_IMAGE_NAME: ${{ github.repository_owner }}/pomowatch/frontend
 
 # ===============================================================================
 # JOBS
@@ -285,20 +286,20 @@ jobs:
         run: |
           echo "### 🚀 Deployment Complete! ###" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Backend Image:** \`ghcr.io/${{ github.repository }}/backend:latest\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Frontend Image:** \`ghcr.io/${{ github.repository }}/frontend:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend Image:** \`${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend Image:** \`${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Pull Commands:**" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ghcr.io/${{ github.repository }}/backend:latest" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ghcr.io/${{ github.repository }}/frontend:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
 # ===============================================================================
 # END OF WORKFLOW
 # ===============================================================================
 # After this workflow completes:
-# 1. Docker images are available at ghcr.io/{owner}/{repo}/{backend|frontend}
+# 1. Docker images are available at ghcr.io/{owner}/pomowatch/{backend|frontend}
 # 2. Security scan results appear in the GitHub Security tab
-# 3. Images can be pulled using: docker pull ghcr.io/{owner}/{repo}/backend:latest
+# 3. Images can be pulled using: docker pull ghcr.io/{owner}/pomowatch/backend:latest
 # ===============================================================================

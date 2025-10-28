@@ -44,6 +44,9 @@ export class App implements OnInit, OnDestroy {
   
   // Reset confirmation modal state
   showResetConfirmationModal = false;
+  
+  // Stop confirmation modal state
+  showStopConfirmationModal = false;
 
   constructor(
     private timerService: TimerService,
@@ -228,11 +231,20 @@ export class App implements OnInit, OnDestroy {
 
   /**
    * Stops the timer completely and resets to 0
-   * Delegate to timer service for implementation
+   * Shows confirmation dialog if there's a running session
    */
   stopTimer(): void {
     console.log('App: stopTimer called');
-    this.timerService.stopTimer();
+    
+    // Check if there's a running session
+    const currentState = this.timerService.currentState;
+    if (currentState.isRunning) {
+      // Show confirmation modal
+      this.showStopConfirmationModal = true;
+    } else {
+      // No running session, proceed with stop
+      this.timerService.stopTimer();
+    }
   }
 
   /**
@@ -299,5 +311,31 @@ export class App implements OnInit, OnDestroy {
     
     // Show success message
     this.toastService.success('Timer reset successfully');
+  }
+
+  // ===== STOP CONFIRMATION METHODS =====
+
+  /**
+   * Hides the stop confirmation modal
+   */
+  hideStopConfirmation(): void {
+    this.showStopConfirmationModal = false;
+  }
+
+  /**
+   * Confirms the stop operation
+   * Stops the current session
+   */
+  confirmStop(): void {
+    console.log('App: confirmStop called');
+    
+    // Stop the current session
+    this.timerService.stopTimer();
+    
+    // Hide the confirmation modal
+    this.showStopConfirmationModal = false;
+    
+    // Show success message
+    this.toastService.success('Session stopped successfully');
   }
 }

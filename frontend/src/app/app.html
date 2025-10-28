@@ -206,6 +206,54 @@
     </div>
   </div>
 
+  <!-- Stop Confirmation Modal -->
+  <div *ngIf="showStopConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="hideStopConfirmation()">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-t-2xl">
+        <div class="flex items-center space-x-3">
+          <div class="flex-shrink-0">
+            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+              <span class="text-xl">⚠️</span>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold">Stop Timer</h3>
+            <p class="text-red-100 text-sm">This will end your current session</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6">
+        <div class="mb-6">
+          <p class="text-gray-700 text-center">
+            You have a running session. Stopping the timer will end the current session and reset the timer to zero.
+          </p>
+          <p class="text-gray-500 text-sm text-center mt-2">
+            Are you sure you want to stop?
+          </p>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="flex space-x-3">
+          <button
+            (click)="hideStopConfirmation()"
+            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium transition-colors duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            (click)="confirmStop()"
+            class="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg font-medium transition-colors duration-200"
+          >
+            Stop Session
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notifications -->
   <app-toast></app-toast>
 

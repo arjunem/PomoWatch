@@ -60,4 +60,7 @@ public class PomodoroSettingsDto
     public bool AutoStartPomodoros { get; set; } = false;
     public bool SoundEnabled { get; set; } = true;
     public bool OfflineMode { get; set; } = false;
+    public string NoiseType { get; set; } = "none";
+    public double NoiseVolume { get; set; } = 0.5;
+    public bool NoiseAutoSync { get; set; } = true;
 }

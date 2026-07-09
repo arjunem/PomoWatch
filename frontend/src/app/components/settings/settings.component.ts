@@ -158,6 +158,21 @@ import { TimerService } from '../../services/timer.service';
                   <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
               </div>
+
+              <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg mt-4">
+                <div>
+                  <label class="text-white font-medium">Auto-sync noise with timer</label>
+                  <p class="text-sm text-gray-400">Automatically play noise when a session starts, pause when it stops</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="noiseAutoSync"
+                    [(ngModel)]="settings.noiseAutoSync"
+                    class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
             </div>
 
             <!-- Offline Mode Section -->
@@ -247,7 +262,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
     autoStartBreaks: false,
     autoStartPomodoros: false,
     soundEnabled: true,
-    offlineMode: false
+    offlineMode: false,
+    noiseType: 'none',
+    noiseVolume: 0.5,
+    noiseAutoSync: true
   };
 
   isLoading = false;

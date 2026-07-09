@@ -7,6 +7,7 @@ import { SettingsService, PomodoroSettingsDto } from './settings.service';
 import { OfflineService } from './offline.service';
 import { OfflineStorageService } from './offline-storage.service';
 import { ToastService } from './toast.service';
+import { NoiseService } from './noise.service';
 import { parseUtcDate, calculateElapsedSeconds, minutesToSeconds } from '../utils/date.utils';
 
 @Injectable({
@@ -30,7 +31,10 @@ export class TimerService {
            autoStartBreaks: false,
            autoStartPomodoros: false,
            soundEnabled: true,
-           offlineMode: false
+           offlineMode: false,
+           noiseType: 'none',
+           noiseVolume: 0.5,
+           noiseAutoSync: true
          });
 
          private sessionChangeSubject = new BehaviorSubject<boolean>(false);
@@ -79,7 +83,8 @@ export class TimerService {
     private settingsService: SettingsService,
     private offlineService: OfflineService,
     private offlineStorageService: OfflineStorageService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private noiseService: NoiseService
   ) {
     // Listen for settings changes and update timer service
     this.settingsService.settings$.subscribe(settings => {
@@ -91,7 +96,10 @@ export class TimerService {
         autoStartBreaks: settings.autoStartBreaks,
         autoStartPomodoros: settings.autoStartPomodoros,
         soundEnabled: settings.soundEnabled,
-        offlineMode: settings.offlineMode
+        offlineMode: settings.offlineMode,
+        noiseType: settings.noiseType,
+        noiseVolume: settings.noiseVolume,
+        noiseAutoSync: settings.noiseAutoSync
       };
       this.settingsSubject.next(frontendSettings);
       console.log('Settings updated in timer service:', frontendSettings);
@@ -215,6 +223,7 @@ export class TimerService {
     });
 
     this.startTimer();
+    this.autoSyncNoise(true);
   }
 
   /**
@@ -241,6 +250,7 @@ export class TimerService {
     });
 
     this.startTimer();
+    this.autoSyncNoise(true);
   }
 
   /**
@@ -270,6 +280,7 @@ export class TimerService {
     });
 
     this.startTimer();
+    this.autoSyncNoise(true);
   }
 
   /**
@@ -289,9 +300,10 @@ export class TimerService {
           isPaused: true
         });
         this.stopTimerInternal();
+        this.autoSyncNoise(false);
         return;
       }
-      
+
       if (currentState.currentSession.id > 0) {
         // Update backend session status (only if it has a valid backend ID)
         this.apiService.pauseSession(currentState.currentSession.id)
@@ -313,6 +325,7 @@ export class TimerService {
                 isPaused: true
               });
               this.stopTimerInternal();
+              this.autoSyncNoise(false);
             },
             error: () => {
               // Handle any remaining errors and still pause locally
@@ -321,6 +334,7 @@ export class TimerService {
                 isPaused: true
               });
               this.stopTimerInternal();
+              this.autoSyncNoise(false);
             }
           });
       } else {
@@ -330,6 +344,7 @@ export class TimerService {
           isPaused: true
         });
         this.stopTimerInternal();
+        this.autoSyncNoise(false);
       }
     }
   }
@@ -351,9 +366,10 @@ export class TimerService {
           isPaused: false
         });
         this.startTimer();
+        this.autoSyncNoise(true);
         return;
       }
-      
+
       if (currentState.currentSession.id > 0) {
         // Update backend session status (only if it has a valid backend ID)
         this.apiService.resumeSession(currentState.currentSession.id)
@@ -375,6 +391,7 @@ export class TimerService {
                 isPaused: false
               });
               this.startTimer();
+              this.autoSyncNoise(true);
             },
             error: () => {
               // Handle any remaining errors and still resume locally
@@ -383,6 +400,7 @@ export class TimerService {
                 isPaused: false
               });
               this.startTimer();
+              this.autoSyncNoise(true);
             }
           });
       } else {
@@ -392,6 +410,7 @@ export class TimerService {
           isPaused: false
         });
         this.startTimer();
+        this.autoSyncNoise(true);
       }
     }
   }
@@ -427,10 +446,11 @@ export class TimerService {
         currentSession: null
       });
       this.stopTimerInternal();
+      this.autoSyncNoise(false);
       this.notifySessionChanged();
       return;
     }
-    
+
     if (currentState.currentSession && currentState.currentSession.id > 0) {
       // Cancel session in backend (only if it has a valid backend ID)
       this.apiService.cancelSession(currentState.currentSession.id)
@@ -453,6 +473,7 @@ export class TimerService {
               currentSession: null
             });
             this.stopTimerInternal();
+            this.autoSyncNoise(false);
             // Notify immediately after successful backend operation
             this.notifySessionChanged(); // Notify that sessions have changed
           },
@@ -465,6 +486,7 @@ export class TimerService {
               currentSession: null
             });
             this.stopTimerInternal();
+            this.autoSyncNoise(false);
             // Notify immediately even on error since we stopped locally
             this.notifySessionChanged(); // Notify that sessions have changed
           }
@@ -478,6 +500,7 @@ export class TimerService {
         currentSession: null
       });
       this.stopTimerInternal();
+      this.autoSyncNoise(false);
       // Notify immediately for local-only sessions
       this.notifySessionChanged(); // Notify that sessions have changed
     }
@@ -497,6 +520,7 @@ export class TimerService {
       currentSession: null // Clear current session on reset
     });
     this.stopTimerInternal();
+    this.autoSyncNoise(false);
     this.notifySessionChanged(); // Notify that sessions have changed
   }
 
@@ -545,7 +569,8 @@ export class TimerService {
    */
   private onTimerComplete(): void {
     const currentState = this.timerStateSubject.value;
-    
+    const willAutoStartNext = this.willAutoStartNextSession(currentState.sessionType);
+
     // Complete session in backend
     if (currentState.currentSession) {
       this.apiService.completeSession(currentState.currentSession.id)
@@ -573,6 +598,11 @@ export class TimerService {
             this.playNotificationSound();
           }
 
+          // Pause noise unless a next session is about to auto-start (avoids a click/restart)
+          if (!willAutoStartNext) {
+            this.autoSyncNoise(false);
+          }
+
           // Auto-start next session based on settings
           this.handleAutoStartNextSession(currentState.sessionType);
           this.notifySessionChanged(); // Notify that sessions have changed
@@ -588,6 +618,11 @@ export class TimerService {
             // Play notification sound if enabled
             if (this.settingsSubject.value.soundEnabled) {
               this.playNotificationSound();
+            }
+
+            // Pause noise unless a next session is about to auto-start (avoids a click/restart)
+            if (!willAutoStartNext) {
+              this.autoSyncNoise(false);
             }
 
             // Auto-start next session based on settings
@@ -608,10 +643,39 @@ export class TimerService {
         this.playNotificationSound();
       }
 
+      // Pause noise unless a next session is about to auto-start (avoids a click/restart)
+      if (!willAutoStartNext) {
+        this.autoSyncNoise(false);
+      }
+
       // Auto-start next session based on settings
       this.handleAutoStartNextSession(currentState.sessionType);
       this.notifySessionChanged(); // Notify that sessions have changed
     }
+  }
+
+  /**
+   * Determines whether handleAutoStartNextSession will start a new session
+   * for the given completed session type, based on current auto-start settings
+   */
+  private willAutoStartNextSession(currentSessionType: 'work' | 'break'): boolean {
+    const settings = this.settingsSubject.value;
+    return (
+      (currentSessionType === 'work' && settings.autoStartBreaks) ||
+      (currentSessionType === 'break' && settings.autoStartPomodoros)
+    );
+  }
+
+  /**
+   * Auto-plays or auto-pauses background noise alongside session lifecycle
+   * transitions, when noiseAutoSync is enabled and a noise type is selected
+   */
+  private autoSyncNoise(shouldPlay: boolean): void {
+    const settings = this.settingsSubject.value;
+    if (!settings.noiseAutoSync || settings.noiseType === 'none') {
+      return;
+    }
+    shouldPlay ? this.noiseService.play() : this.noiseService.pause();
   }
 
   /**
@@ -701,9 +765,12 @@ export class TimerService {
       autoStartBreaks: settings.autoStartBreaks,
       autoStartPomodoros: settings.autoStartPomodoros,
       soundEnabled: settings.soundEnabled,
-      offlineMode: settings.offlineMode
+      offlineMode: settings.offlineMode,
+      noiseType: settings.noiseType,
+      noiseVolume: settings.noiseVolume,
+      noiseAutoSync: settings.noiseAutoSync
     };
-    
+
     this.settingsService.updateSettings(backendSettings).subscribe({
       next: () => {
         console.log('Settings saved to backend');

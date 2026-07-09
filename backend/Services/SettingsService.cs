@@ -1,5 +1,6 @@
 using PomodoroAPI.Repositories;
 using PomodoroAPI.Models;
+using System.Globalization;
 
 namespace PomodoroAPI.Services;
 
@@ -21,7 +22,10 @@ public class SettingsService : ISettingsService
         { "auto_start_breaks", "false" },
         { "auto_start_pomodoros", "false" },
         { "sound_enabled", "true" },
-        { "offline_mode", "false" }
+        { "offline_mode", "false" },
+        { "noise_type", "none" },
+        { "noise_volume", "0.5" },
+        { "noise_auto_sync", "true" }
     };
 
     public SettingsService(ISettingsRepository settingsRepository)
@@ -46,6 +50,9 @@ public class SettingsService : ISettingsService
         settings.AutoStartPomodoros = bool.Parse(await GetSettingValueAsync("auto_start_pomodoros", _defaultSettings["auto_start_pomodoros"]));
         settings.SoundEnabled = bool.Parse(await GetSettingValueAsync("sound_enabled", _defaultSettings["sound_enabled"]));
         settings.OfflineMode = bool.Parse(await GetSettingValueAsync("offline_mode", _defaultSettings["offline_mode"]));
+        settings.NoiseType = await GetSettingValueAsync("noise_type", _defaultSettings["noise_type"]);
+        settings.NoiseVolume = double.Parse(await GetSettingValueAsync("noise_volume", _defaultSettings["noise_volume"]), CultureInfo.InvariantCulture);
+        settings.NoiseAutoSync = bool.Parse(await GetSettingValueAsync("noise_auto_sync", _defaultSettings["noise_auto_sync"]));
 
         return settings;
     }
@@ -65,6 +72,9 @@ public class SettingsService : ISettingsService
         await SetSettingValueAsync("auto_start_pomodoros", settings.AutoStartPomodoros.ToString().ToLower());
         await SetSettingValueAsync("sound_enabled", settings.SoundEnabled.ToString().ToLower());
         await SetSettingValueAsync("offline_mode", settings.OfflineMode.ToString().ToLower());
+        await SetSettingValueAsync("noise_type", settings.NoiseType);
+        await SetSettingValueAsync("noise_volume", settings.NoiseVolume.ToString(CultureInfo.InvariantCulture));
+        await SetSettingValueAsync("noise_auto_sync", settings.NoiseAutoSync.ToString().ToLower());
 
         return settings;
     }
@@ -119,7 +129,10 @@ public class SettingsService : ISettingsService
         await SetSettingValueAsync("auto_start_breaks", _defaultSettings["auto_start_breaks"]);
         await SetSettingValueAsync("auto_start_pomodoros", _defaultSettings["auto_start_pomodoros"]);
         await SetSettingValueAsync("sound_enabled", _defaultSettings["sound_enabled"]);
-        
+        await SetSettingValueAsync("noise_type", _defaultSettings["noise_type"]);
+        await SetSettingValueAsync("noise_volume", _defaultSettings["noise_volume"]);
+        await SetSettingValueAsync("noise_auto_sync", _defaultSettings["noise_auto_sync"]);
+
         // Set the default values in the DTO
         defaultSettings.WorkDuration = int.Parse(_defaultSettings["work_duration"]);
         defaultSettings.BreakDuration = int.Parse(_defaultSettings["break_duration"]);
@@ -129,6 +142,9 @@ public class SettingsService : ISettingsService
         defaultSettings.AutoStartPomodoros = bool.Parse(_defaultSettings["auto_start_pomodoros"]);
         defaultSettings.SoundEnabled = bool.Parse(_defaultSettings["sound_enabled"]);
         defaultSettings.OfflineMode = bool.Parse(_defaultSettings["offline_mode"]);
+        defaultSettings.NoiseType = _defaultSettings["noise_type"];
+        defaultSettings.NoiseVolume = double.Parse(_defaultSettings["noise_volume"], CultureInfo.InvariantCulture);
+        defaultSettings.NoiseAutoSync = bool.Parse(_defaultSettings["noise_auto_sync"]);
 
         return defaultSettings;
     }

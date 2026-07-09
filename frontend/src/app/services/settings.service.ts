@@ -4,6 +4,7 @@ import { Observable, BehaviorSubject, of } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { OfflineService } from './offline.service';
+import { NoiseType } from '../models/session.model';
 
 export interface PomodoroSettingsDto {
   workDuration: number;
@@ -14,6 +15,9 @@ export interface PomodoroSettingsDto {
   autoStartPomodoros: boolean;
   soundEnabled: boolean;
   offlineMode: boolean;
+  noiseType: NoiseType;
+  noiseVolume: number;
+  noiseAutoSync: boolean;
 }
 
 @Injectable({
@@ -29,7 +33,10 @@ export class SettingsService {
     autoStartBreaks: false,
     autoStartPomodoros: false,
     soundEnabled: true,
-    offlineMode: false
+    offlineMode: false,
+    noiseType: 'none',
+    noiseVolume: 0.5,
+    noiseAutoSync: true
   });
 
   public settings$ = this.settingsSubject.asObservable();
@@ -55,7 +62,10 @@ export class SettingsService {
         autoStartBreaks: false,
         autoStartPomodoros: false,
         soundEnabled: true,
-        offlineMode: true
+        offlineMode: true,
+        noiseType: 'none',
+        noiseVolume: 0.5,
+        noiseAutoSync: true
       };
       this.settingsSubject.next(defaultSettings);
       return of(defaultSettings);
@@ -79,7 +89,10 @@ export class SettingsService {
             autoStartBreaks: false,
             autoStartPomodoros: false,
             soundEnabled: true,
-            offlineMode: true
+            offlineMode: true,
+            noiseType: 'none',
+            noiseVolume: 0.5,
+            noiseAutoSync: true
           };
           this.settingsSubject.next(defaultSettings);
           return [defaultSettings];
@@ -129,7 +142,10 @@ export class SettingsService {
         autoStartBreaks: false,
         autoStartPomodoros: false,
         soundEnabled: true,
-        offlineMode: true
+        offlineMode: true,
+        noiseType: 'none',
+        noiseVolume: 0.5,
+        noiseAutoSync: true
       };
       this.settingsSubject.next(defaultSettings);
       return of(defaultSettings);
@@ -153,7 +169,10 @@ export class SettingsService {
             autoStartBreaks: false,
             autoStartPomodoros: false,
             soundEnabled: true,
-            offlineMode: true
+            offlineMode: true,
+            noiseType: 'none',
+            noiseVolume: 0.5,
+            noiseAutoSync: true
           };
           this.settingsSubject.next(defaultSettings);
           return [defaultSettings];

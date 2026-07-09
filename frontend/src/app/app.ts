@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
 import { Observable, Subject, takeUntil } from 'rxjs';
 import { TimerService } from './services/timer.service';
@@ -7,7 +8,9 @@ import { ApiService } from './services/api.service';
 import { SettingsService } from './services/settings.service';
 import { OfflineService } from './services/offline.service';
 import { ToastService } from './services/toast.service';
-import { Session, TimerState, PomodoroSettings } from './models/session.model';
+import { NoiseService, NoiseRepeatMode, LofiProgress } from './services/noise.service';
+import { Track } from './config/lofi-tracks';
+import { Session, TimerState, PomodoroSettings, NoiseType } from './models/session.model';
 import { SessionHistoryComponent } from './components/session-history/session-history.component';
 import { SettingsComponent } from './components/settings/settings.component';
 import { TodayProgressComponent } from './components/today-progress/today-progress.component';
@@ -15,7 +18,7 @@ import { ToastComponent } from './components/toast/toast.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, SessionHistoryComponent, TodayProgressComponent, SettingsComponent, ToastComponent],
+  imports: [RouterOutlet, CommonModule, FormsModule, SessionHistoryComponent, TodayProgressComponent, SettingsComponent, ToastComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -34,11 +37,25 @@ export class App implements OnInit, OnDestroy {
 
   // Settings observable for user preferences
   settings$: Observable<PomodoroSettings>;
-  
+
   // Offline mode observable
   isOffline$: Observable<boolean>;
   isOffline: boolean = false; // Local state for toggle switch
-  
+
+  // Background noise state
+  noiseType: NoiseType = 'none';
+  noiseVolume = 0.5;
+  noisePlaying$: Observable<boolean>;
+  noiseRepeatMode$: Observable<NoiseRepeatMode>;
+  lofiTrackIndex$: Observable<number>;
+  lofiTracks: readonly Track[];
+  hasLofiTracks: boolean;
+  lofiProgress$: Observable<LofiProgress>;
+  isSeekingLofi = false;
+  seekPreviewValue = 0;
+  private settingsNoiseType: NoiseType = 'none';
+  private wasLofiAvailable = true;
+
   // Settings modal state
   showSettingsModal = false;
   
@@ -54,6 +71,7 @@ export class App implements OnInit, OnDestroy {
     private settingsService: SettingsService,
     private offlineService: OfflineService,
     private toastService: ToastService,
+    private noiseService: NoiseService,
     private cdr: ChangeDetectorRef
   ) {
     // Initialize observable streams from timer service
@@ -66,16 +84,58 @@ export class App implements OnInit, OnDestroy {
     this.currentSession$ = this.timerService.currentSession$;
     this.settings$ = this.timerService.settings$;
     this.isOffline$ = this.offlineService.isOffline$;
-    
+    this.noisePlaying$ = this.noiseService.playing$;
+    this.noiseRepeatMode$ = this.noiseService.repeatMode$;
+    this.lofiTrackIndex$ = this.noiseService.lofiTrackIndex$;
+    this.lofiTracks = this.noiseService.lofiTracks;
+    this.hasLofiTracks = this.noiseService.hasLofiTracks;
+    this.lofiProgress$ = this.noiseService.lofiProgress$;
+    this.wasLofiAvailable = this.hasLofiTracks && !this.isOffline;
+
     // Subscribe to offline state changes to update local state
     this.isOffline$
       .pipe(takeUntil(this.destroy$))
       .subscribe(isOffline => {
         console.log('App: Offline state changed to:', isOffline);
         this.isOffline = isOffline;
+        this.reconcileNoiseType();
         // Force change detection to update the UI
         this.cdr.detectChanges();
       });
+
+    // Mirror noise preferences from settings into local state and the noise engine
+    this.settings$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(settings => {
+        this.settingsNoiseType = settings.noiseType;
+        this.noiseVolume = settings.noiseVolume;
+        this.reconcileNoiseType();
+        this.noiseService.setVolume(this.noiseVolume);
+      });
+  }
+
+  /**
+   * Reconciles the effective (locally displayed) noise type against the
+   * persisted setting, given whether Lo-fi is currently usable (URLs
+   * configured and online - YouTube playback needs network). Falls back to
+   * 'none' without overwriting the persisted choice, so the original
+   * selection re-activates automatically once Lo-fi becomes usable again.
+   */
+  private reconcileNoiseType(): void {
+    const lofiAvailable = this.hasLofiTracks && !this.isOffline;
+
+    if (this.settingsNoiseType === 'lofi' && !lofiAvailable) {
+      this.noiseType = 'none';
+      if (this.wasLofiAvailable) {
+        const reason = this.isOffline ? 'you are offline' : 'no track URLs are configured';
+        this.toastService.info(`Tracks are unavailable (${reason}) — switched to None.`);
+      }
+    } else {
+      this.noiseType = this.settingsNoiseType;
+    }
+
+    this.wasLofiAvailable = lofiAvailable;
+    this.noiseService.setType(this.noiseType);
   }
 
   /**
@@ -190,6 +250,7 @@ export class App implements OnInit, OnDestroy {
    * Cleans up subscriptions to prevent memory leaks
    */
   ngOnDestroy(): void {
+    this.noiseService.stop();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -263,6 +324,85 @@ export class App implements OnInit, OnDestroy {
       // No active session, proceed with reset
       this.timerService.resetTimer();
     }
+  }
+
+  // ===== BACKGROUND NOISE METHODS =====
+
+  /**
+   * Changes the selected noise type, applies it to the noise engine,
+   * and persists the choice via SettingsService
+   */
+  onNoiseTypeChange(value: NoiseType): void {
+    this.noiseType = value;
+    this.noiseService.setType(value);
+    const updatedSettings = { ...this.settingsService.currentSettings, noiseType: value };
+    this.settingsService.updateSettings(updatedSettings).subscribe({
+      error: (error) => console.error('Failed to persist noise type:', error)
+    });
+  }
+
+  /**
+   * Changes the noise volume, applies it live, and persists via SettingsService
+   */
+  onNoiseVolumeChange(event: Event): void {
+    const volume = (event.target as HTMLInputElement).valueAsNumber;
+    this.noiseVolume = volume;
+    this.noiseService.setVolume(volume);
+    const updatedSettings = { ...this.settingsService.currentSettings, noiseVolume: volume };
+    this.settingsService.updateSettings(updatedSettings).subscribe({
+      error: (error) => console.error('Failed to persist noise volume:', error)
+    });
+  }
+
+  /**
+   * Toggles noise play/pause via the manual quick-access control
+   */
+  toggleNoisePlayback(): void {
+    this.noiseService.toggle();
+  }
+
+  /**
+   * Toggles Lo-fi repeat mode between repeating the current video and
+   * advancing through the configured URL list
+   */
+  toggleNoiseRepeatMode(): void {
+    this.noiseService.toggleRepeatMode();
+  }
+
+  /**
+   * Manually selects a specific Lo-fi track from the configured URL list
+   */
+  onLofiTrackChange(index: number): void {
+    this.noiseService.selectLofiTrack(index);
+  }
+
+  /**
+   * Tracks the seek bar's live drag position without committing a seek yet,
+   * so the polled playback position doesn't fight the user's drag
+   */
+  onLofiSeekInput(event: Event): void {
+    this.seekPreviewValue = (event.target as HTMLInputElement).valueAsNumber;
+  }
+
+  /**
+   * Commits the seek once the user releases the seek bar
+   */
+  onLofiSeekCommit(event: Event): void {
+    const seconds = (event.target as HTMLInputElement).valueAsNumber;
+    this.noiseService.seekTo(seconds);
+    this.isSeekingLofi = false;
+  }
+
+  /**
+   * Formats a seconds value as M:SS for the Lo-fi seek bar labels
+   */
+  formatSeekTime(seconds: number): string {
+    if (!isFinite(seconds) || seconds < 0) {
+      return '0:00';
+    }
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
   // ===== SETTINGS METHODS =====

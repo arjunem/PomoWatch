@@ -65,6 +65,12 @@ public class SettingsController : ControllerBase
             if (settings.SessionsUntilLongBreak < 1 || settings.SessionsUntilLongBreak > 20)
                 return BadRequest("Sessions until long break must be between 1 and 20");
 
+            if (!new[] { "none", "white", "brown", "lofi" }.Contains(settings.NoiseType))
+                return BadRequest("Noise type must be one of: none, white, brown, lofi");
+
+            if (settings.NoiseVolume < 0 || settings.NoiseVolume > 1)
+                return BadRequest("Noise volume must be between 0 and 1");
+
             var updatedSettings = await _settingsService.UpdateSettingsAsync(settings);
             return Ok(updatedSettings);
         }

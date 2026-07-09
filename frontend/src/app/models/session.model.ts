@@ -35,6 +35,11 @@ export interface TimerState {
 }
 
 /**
+ * Background noise type for focus sessions
+ */
+export type NoiseType = 'none' | 'white' | 'brown' | 'lofi';
+
+/**
  * User-configurable settings for the Pomodoro timer
  * Controls durations, behavior, and preferences
  */
@@ -47,4 +52,7 @@ export interface PomodoroSettings {
   autoStartPomodoros: boolean;
   soundEnabled: boolean;
   offlineMode: boolean;
+  noiseType: NoiseType;
+  noiseVolume: number;
+  noiseAutoSync: boolean;
 }

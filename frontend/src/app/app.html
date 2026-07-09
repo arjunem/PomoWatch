@@ -105,6 +105,80 @@
           </button>
         </div>
 
+        <!-- Background Noise Controls -->
+        <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
+          <select
+            [ngModel]="noiseType"
+            (ngModelChange)="onNoiseTypeChange($event)"
+            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg font-medium text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+          >
+            <option value="none">🔇 No Noise</option>
+            <option value="white">📻 White Noise</option>
+            <option value="brown">🟤 Brown Noise</option>
+            <option value="lofi" [disabled]="!hasLofiTracks || isOffline">🎧 Tracks{{ !hasLofiTracks ? ' (unavailable)' : (isOffline ? ' (offline)' : '') }}</option>
+          </select>
+
+          <select
+            *ngIf="noiseType === 'lofi'"
+            [ngModel]="lofiTrackIndex$ | async"
+            (ngModelChange)="onLofiTrackChange($event)"
+            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg font-medium text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+          >
+            <option *ngFor="let track of lofiTracks; let i = index" [ngValue]="i">{{ track.name }}</option>
+          </select>
+
+          <button
+            (click)="toggleNoisePlayback()"
+            [disabled]="noiseType === 'none'"
+            class="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 flex items-center space-x-2"
+          >
+            <span>{{ (noisePlaying$ | async) ? '⏸️' : '▶️' }}</span>
+            <span>{{ (noisePlaying$ | async) ? 'Pause Noise' : 'Play Noise' }}</span>
+          </button>
+
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-600">🔉</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              [value]="noiseVolume"
+              (input)="onNoiseVolumeChange($event)"
+              class="w-24 accent-purple-600"
+            >
+          </div>
+
+          <button
+            *ngIf="noiseType === 'lofi'"
+            (click)="toggleNoiseRepeatMode()"
+            [title]="(noiseRepeatMode$ | async) === 'repeat-one' ? 'Repeating current video' : 'Playing through list'"
+            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg font-medium text-sm"
+          >
+            {{ (noiseRepeatMode$ | async) === 'repeat-one' ? '🔂' : '🔁' }}
+          </button>
+        </div>
+
+        <!-- Lo-fi Seek Bar -->
+        <div *ngIf="noiseType === 'lofi'" class="flex items-center justify-center gap-2 mb-6">
+          <ng-container *ngIf="lofiProgress$ | async as progress">
+            <span class="text-xs text-gray-500 w-9 text-right">{{ formatSeekTime(isSeekingLofi ? seekPreviewValue : progress.currentTime) }}</span>
+            <input
+              type="range"
+              min="0"
+              [max]="progress.duration || 0"
+              step="1"
+              [value]="isSeekingLofi ? seekPreviewValue : progress.currentTime"
+              (mousedown)="isSeekingLofi = true"
+              (touchstart)="isSeekingLofi = true"
+              (input)="onLofiSeekInput($event)"
+              (change)="onLofiSeekCommit($event)"
+              class="w-64 accent-purple-600"
+            >
+            <span class="text-xs text-gray-500 w-9">{{ formatSeekTime(progress.duration) }}</span>
+          </ng-container>
+        </div>
+
         <!-- Timer Controls -->
         <div class="flex justify-center space-x-4">
           <!-- Pause/Resume Button -->

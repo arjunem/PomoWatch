@@ -133,3 +133,4 @@ out-tsc/**/*.map
 !webpack.config.js
 !tailwind.config.js
 
+claude.md

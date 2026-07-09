@@ -1,0 +1,120 @@
+/* Pomodoro App — Theme Tokens
+   Apply by setting data-theme + data-mode on the root element, e.g.:
+   <html data-theme="indigo-slate" data-mode="dark">
+   Every value below is a CSS custom property — swap the attributes and the
+   whole UI re-themes with zero JS beyond toggling the attributes.
+*/
+
+/* ============ INDIGO SLATE ============ */
+[data-theme="indigo-slate"][data-mode="light"] {
+  --color-bg-page: #EEF0F4;
+  --color-bg-card: #FFFFFF;
+  --color-border: #E3E6EC;
+  --color-text-primary: #1E2233;
+  --color-text-secondary: #6B7280;
+  --color-accent: #45507E;
+  --color-accent-contrast: #FFFFFF;
+  --color-neutral-strong: #3A3F4D;
+  --color-neutral-strong-contrast: #FFFFFF;
+  --color-track-bg: #D9DCE3;
+  --color-danger: #B23A31;
+  --color-danger-bg: #F7E7E5;
+  --color-muted-icon: #8A8FA3;
+  --color-disabled-text: #9297A5;
+  --color-disabled-bg: #F3F4F7;
+  --color-stat-tile-bg: #F5F6F9;
+}
+[data-theme="indigo-slate"][data-mode="dark"] {
+  --color-bg-page: #12141A;
+  --color-bg-card: #1B1E27;
+  --color-border: #2A2E3A;
+  --color-text-primary: #E7E9F0;
+  --color-text-secondary: #8B90A0;
+  --color-accent: #7C8AC9;
+  --color-accent-contrast: #12141A;
+  --color-neutral-strong: #E7E9F0;
+  --color-neutral-strong-contrast: #12141A;
+  --color-track-bg: #2E3240;
+  --color-danger: #E28680;
+  --color-danger-bg: #3A2225;
+  --color-muted-icon: #5A5F70;
+  --color-disabled-text: #5A5F70;
+  --color-disabled-bg: #1F2330;
+  --color-stat-tile-bg: #20242F;
+}
+
+/* ============ DEEP TEAL ============ */
+[data-theme="deep-teal"][data-mode="light"] {
+  --color-bg-page: #F5F6F4;
+  --color-bg-card: #FFFFFF;
+  --color-border: #E4E7E2;
+  --color-text-primary: #202623;
+  --color-text-secondary: #6B756F;
+  --color-accent: #2F6F62;
+  --color-accent-contrast: #FFFFFF;
+  --color-neutral-strong: #33403B;
+  --color-neutral-strong-contrast: #FFFFFF;
+  --color-track-bg: #DBDFDA;
+  --color-danger: #B23A31;
+  --color-danger-bg: #F7E7E5;
+  --color-muted-icon: #8C968F;
+  --color-disabled-text: #93998F;
+  --color-disabled-bg: #F2F4F1;
+  --color-stat-tile-bg: #F2F4F1;
+}
+[data-theme="deep-teal"][data-mode="dark"] {
+  --color-bg-page: #101512;
+  --color-bg-card: #1A211D;
+  --color-border: #262E29;
+  --color-text-primary: #E7ECE9;
+  --color-text-secondary: #8C968F;
+  --color-accent: #5FA394;
+  --color-accent-contrast: #101512;
+  --color-neutral-strong: #E7ECE9;
+  --color-neutral-strong-contrast: #101512;
+  --color-track-bg: #293029;
+  --color-danger: #E28680;
+  --color-danger-bg: #3A2225;
+  --color-muted-icon: #57655F;
+  --color-disabled-text: #57655F;
+  --color-disabled-bg: #1E2621;
+  --color-stat-tile-bg: #20281F;
+}
+
+/* ============ WARM CLAY ============ */
+[data-theme="warm-clay"][data-mode="light"] {
+  --color-bg-page: #F7F4F1;
+  --color-bg-card: #FFFFFF;
+  --color-border: #EBE3DB;
+  --color-text-primary: #2A231D;
+  --color-text-secondary: #7A7169;
+  --color-accent: #A85D3A;
+  --color-accent-contrast: #FFFFFF;
+  --color-neutral-strong: #463B32;
+  --color-neutral-strong-contrast: #FFFFFF;
+  --color-track-bg: #E4DCD2;
+  --color-danger: #B23A31;
+  --color-danger-bg: #F7E7E5;
+  --color-muted-icon: #A69A8D;
+  --color-disabled-text: #AA9F93;
+  --color-disabled-bg: #F5F1EC;
+  --color-stat-tile-bg: #F5F1EC;
+}
+[data-theme="warm-clay"][data-mode="dark"] {
+  --color-bg-page: #181410;
+  --color-bg-card: #211C17;
+  --color-border: #322A22;
+  --color-text-primary: #F0EAE3;
+  --color-text-secondary: #A0958A;
+  --color-accent: #D08A63;
+  --color-accent-contrast: #181410;
+  --color-neutral-strong: #F0EAE3;
+  --color-neutral-strong-contrast: #181410;
+  --color-track-bg: #332B22;
+  --color-danger: #E28680;
+  --color-danger-bg: #3A2225;
+  --color-muted-icon: #6B5F52;
+  --color-disabled-text: #6B5F52;
+  --color-disabled-bg: #241F19;
+  --color-stat-tile-bg: #281F17;
+}

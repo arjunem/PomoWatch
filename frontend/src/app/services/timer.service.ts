@@ -675,6 +675,10 @@ export class TimerService {
     if (!settings.noiseAutoSync || settings.noiseType === 'none') {
       return;
     }
+    // Noise should only auto-start for work sessions, never for breaks.
+    if (shouldPlay && this.timerStateSubject.value.sessionType !== 'work') {
+      return;
+    }
     shouldPlay ? this.noiseService.play() : this.noiseService.pause();
   }
 

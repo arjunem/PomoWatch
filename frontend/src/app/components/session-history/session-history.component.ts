@@ -121,7 +121,7 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
 
         <!-- Session Details -->
         <div *ngIf="sessionToDelete" class="bg-page rounded-xl p-4 mb-6 border border-line">
-          <div class="flex items-center space-x-3 mb-3">
+          <div class="flex flex-col items-center text-center space-y-2 mb-3">
             <div class="w-9 h-9 flex-shrink-0 rounded-full bg-card border border-line flex items-center justify-center">
               <svg *ngIf="sessionToDelete.type === 'work'" class="w-4 h-4 text-accent" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.25" fill="currentColor" stroke="none"/></svg>
               <svg *ngIf="sessionToDelete.type !== 'work'" class="w-4 h-4 text-accent" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3.5h8v5.5a3 3 0 01-3 3h-2a3 3 0 01-3-3v-5.5z"/><path d="M10.5 4.5h1a1.7 1.7 0 010 3.4h-1"/></svg>
@@ -131,7 +131,7 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
               <p class="text-ink-soft text-sm">{{ formatTime(sessionToDelete.startTime) }}</p>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-4 text-sm">
+          <div class="grid grid-cols-2 gap-4 text-sm text-center">
             <div class="text-ink-soft">
               <span class="text-muted">Duration:</span>
               <span class="text-ink font-medium ml-2">{{ sessionToDelete.durationMinutes }} min</span>

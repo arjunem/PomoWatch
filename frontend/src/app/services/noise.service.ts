@@ -40,6 +40,12 @@ export class NoiseService {
   private ytApiLoadPromise: Promise<void> | null = null;
   private lofiTrackIndex = 0;
 
+  /** Track index/repeat-mode currently loaded into ytPlayer, so resuming from
+   * pause can just call playVideo() instead of reloading (which would reset
+   * playback position to 0). Null means nothing is loaded yet. */
+  private loadedLofiTrackIndex: number | null = null;
+  private loadedLofiRepeatMode: NoiseRepeatMode | null = null;
+
   private currentType: NoiseType = 'none';
   private currentVolume = 0.5;
 
@@ -167,6 +173,8 @@ export class NoiseService {
       this.ytPlayer.destroy();
       this.ytPlayer = null;
     }
+    this.loadedLofiTrackIndex = null;
+    this.loadedLofiRepeatMode = null;
   }
 
   private startLofiProgressPolling(): void {
@@ -321,6 +329,8 @@ export class NoiseService {
         });
       });
       this.ytPlayer.setVolume(this.volumeToGain(this.currentVolume) * 100);
+      this.loadedLofiTrackIndex = null;
+      this.loadedLofiRepeatMode = null;
     }
     return this.ytPlayer;
   }
@@ -351,6 +361,8 @@ export class NoiseService {
     } else {
       this.ytPlayer.loadVideoById(videoId);
     }
+    this.loadedLofiTrackIndex = this.lofiTrackIndex;
+    this.loadedLofiRepeatMode = this.repeatModeSubject.value;
   }
 
   private async startLofi(): Promise<void> {
@@ -360,7 +372,12 @@ export class NoiseService {
       return;
     }
     await this.ensureYouTubePlayer();
-    this.loadCurrentLofiTrack();
+    const alreadyLoaded =
+      this.loadedLofiTrackIndex === this.lofiTrackIndex &&
+      this.loadedLofiRepeatMode === this.repeatModeSubject.value;
+    if (!alreadyLoaded) {
+      this.loadCurrentLofiTrack();
+    }
     this.ytPlayer.playVideo();
     this.playingSubject.next(true);
     this.startLofiProgressPolling();

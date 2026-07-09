@@ -15,10 +15,11 @@ import { SessionHistoryComponent } from './components/session-history/session-hi
 import { SettingsComponent } from './components/settings/settings.component';
 import { TodayProgressComponent } from './components/today-progress/today-progress.component';
 import { ToastComponent } from './components/toast/toast.component';
+import { ThemeSelectorComponent } from './components/theme-selector/theme-selector.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, FormsModule, SessionHistoryComponent, TodayProgressComponent, SettingsComponent, ToastComponent],
+  imports: [RouterOutlet, CommonModule, FormsModule, SessionHistoryComponent, TodayProgressComponent, SettingsComponent, ToastComponent, ThemeSelectorComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

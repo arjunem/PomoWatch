@@ -1,32 +1,35 @@
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+<div class="min-h-screen bg-page">
   <!-- Header -->
-  <header class="bg-white shadow-sm border-b">
+  <header class="bg-card shadow-sm border-b border-line">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center py-4">
+      <div class="flex flex-wrap justify-between items-center gap-4 py-4">
         <div class="flex items-center space-x-4">
-          <h1 class="text-2xl font-bold text-gray-900">PomoWatch</h1>
-          <span class="text-sm text-gray-600">A pomodoro timer</span>
+          <h1 class="text-2xl font-bold text-ink">PomoWatch</h1>
+          <span class="text-sm text-ink-soft">A pomodoro timer</span>
         </div>
-        <div class="flex items-center space-x-4">
+        <div class="flex flex-wrap items-center gap-4">
           <!-- Offline Mode Toggle Switch -->
           <div class="flex items-center space-x-2">
-            <span class="text-sm font-medium text-gray-700">Online</span>
+            <span class="text-sm font-medium text-ink-soft">Online</span>
             <label class="relative inline-flex items-center cursor-pointer">
-              <input 
+              <input
                 #offlineToggle
-                type="checkbox" 
-                [checked]="isOffline" 
+                type="checkbox"
+                [checked]="isOffline"
                 (change)="toggleOfflineMode(offlineToggle)"
                 class="sr-only peer"
               >
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+              <div class="w-11 h-6 bg-track peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/40 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
             </label>
-            <span class="text-sm font-medium text-gray-700">Offline</span>
+            <span class="text-sm font-medium text-ink-soft">Offline</span>
           </div>
-          
+
+          <!-- Theme Selector -->
+          <app-theme-selector></app-theme-selector>
+
           <button
             (click)="showSettings()"
-            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2">
+            class="bg-strong hover:opacity-90 text-strong-ink px-4 py-2 rounded-lg font-medium transition-opacity duration-200 flex items-center space-x-2">
             <span>⚙️</span>
             <span>Settings</span>
           </button>
@@ -38,7 +41,7 @@
   <!-- Main Content -->
   <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Timer Section -->
-    <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+    <div class="bg-card border border-line rounded-xl shadow-lg p-8 mb-8">
       <div class="text-center">
         <!-- Timer Display -->
         <div class="mb-8">
@@ -51,7 +54,7 @@
                 cy="50"
                 r="45"
                 fill="none"
-                stroke="#e5e7eb"
+                style="stroke: var(--color-track-bg)"
                 stroke-width="8"
                 class="opacity-30"
               />
@@ -61,7 +64,7 @@
                 cy="50"
                 r="45"
                 fill="none"
-                stroke="#3b82f6"
+                style="stroke: var(--color-accent)"
                 stroke-width="8"
                 stroke-linecap="round"
                 [style.stroke-dasharray]="'283'"
@@ -69,13 +72,13 @@
                 class="transition-all duration-1000 ease-in-out"
               />
             </svg>
-            
+
             <!-- Timer Text -->
             <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <div class="text-4xl font-mono font-bold text-gray-800 mb-2">
+              <div class="text-4xl font-mono font-bold text-ink mb-2">
                 {{ remainingTime$ | async }}
               </div>
-              <div class="text-lg text-gray-600">
+              <div class="text-lg text-ink-soft">
                 {{ (timerState$ | async)?.sessionType === 'work' ? 'Work Time' : 'Break Time' }}
               </div>
             </div>
@@ -83,14 +86,14 @@
         </div>
 
         <!-- Control Buttons -->
-        <div class="flex justify-center space-x-4 mb-6">
+        <div class="flex gap-3 mb-6 w-full max-w-xl mx-auto">
           <!-- Start Work Button -->
           <button
             (click)="startWorkSession()"
             [disabled]="(hasActiveSession$ | async)"
-            class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center space-x-2"
+            class="flex-1 bg-accent hover:opacity-90 disabled:bg-disabled-bg disabled:text-disabled disabled:opacity-100 text-accent-ink px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center space-x-2"
           >
-            <span>🎯</span>
+            <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11l9-5.5-9-5.5z"/></svg>
             <span>Start Work</span>
           </button>
 
@@ -98,19 +101,19 @@
           <button
             (click)="startBreakSession()"
             [disabled]="(hasActiveSession$ | async)"
-            class="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center space-x-2"
+            class="flex-1 border-2 border-accent text-accent bg-transparent hover:bg-accent/10 disabled:border-line disabled:text-disabled disabled:hover:bg-transparent px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center space-x-2"
           >
-            <span>☕</span>
+            <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>
             <span>Start Break</span>
           </button>
         </div>
 
         <!-- Background Noise Controls -->
-        <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
+        <div class="flex flex-wrap items-center justify-center gap-3 mb-4">
           <select
             [ngModel]="noiseType"
             (ngModelChange)="onNoiseTypeChange($event)"
-            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg font-medium text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+            class="min-w-0 bg-page hover:bg-disabled-bg text-ink-soft px-3 py-2 rounded-lg font-medium text-sm border border-line focus:outline-none focus:ring-2 focus:ring-accent"
           >
             <option value="none">🔇 No Noise</option>
             <option value="white">📻 White Noise</option>
@@ -122,7 +125,7 @@
             *ngIf="noiseType === 'lofi'"
             [ngModel]="lofiTrackIndex$ | async"
             (ngModelChange)="onLofiTrackChange($event)"
-            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg font-medium text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+            class="min-w-0 max-w-[200px] truncate bg-page hover:bg-disabled-bg text-ink-soft px-3 py-2 rounded-lg font-medium text-sm border border-line focus:outline-none focus:ring-2 focus:ring-accent"
           >
             <option *ngFor="let track of lofiTracks; let i = index" [ngValue]="i">{{ track.name }}</option>
           </select>
@@ -130,39 +133,43 @@
           <button
             (click)="toggleNoisePlayback()"
             [disabled]="noiseType === 'none'"
-            class="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 flex items-center space-x-2"
+            class="bg-strong hover:opacity-90 disabled:bg-disabled-bg disabled:text-disabled disabled:opacity-100 text-strong-ink px-4 py-2 rounded-lg font-semibold border border-transparent transition-all duration-200 flex items-center space-x-2"
           >
-            <span>{{ (noisePlaying$ | async) ? '⏸️' : '▶️' }}</span>
+            <svg *ngIf="noisePlaying$ | async" class="w-4 h-4 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>
+            <svg *ngIf="!(noisePlaying$ | async)" class="w-4 h-4 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11l9-5.5-9-5.5z"/></svg>
             <span>{{ (noisePlaying$ | async) ? 'Pause Noise' : 'Play Noise' }}</span>
           </button>
-
-          <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-600">🔉</span>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              [value]="noiseVolume"
-              (input)="onNoiseVolumeChange($event)"
-              class="w-24 accent-purple-600"
-            >
-          </div>
 
           <button
             *ngIf="noiseType === 'lofi'"
             (click)="toggleNoiseRepeatMode()"
             [title]="(noiseRepeatMode$ | async) === 'repeat-one' ? 'Repeating current video' : 'Playing through list'"
-            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg font-medium text-sm"
+            class="bg-page hover:bg-disabled-bg text-ink-soft px-3 py-2 rounded-lg font-medium text-sm border border-line"
           >
             {{ (noiseRepeatMode$ | async) === 'repeat-one' ? '🔂' : '🔁' }}
           </button>
         </div>
 
+        <!-- Volume Slider (aligned with the seek bar below: fixed 34px end labels) -->
+        <div class="flex items-center justify-center gap-2 mb-4 w-full max-w-xl mx-auto">
+          <span class="text-sm text-muted w-[34px] text-center flex-shrink-0" aria-hidden="true">−</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            [value]="noiseVolume"
+            (input)="onNoiseVolumeChange($event)"
+            aria-label="Noise volume"
+            class="flex-1 min-w-0 accent-[var(--color-accent)]"
+          >
+          <span class="text-sm text-muted w-[34px] text-center flex-shrink-0" aria-hidden="true">+</span>
+        </div>
+
         <!-- Lo-fi Seek Bar -->
-        <div *ngIf="noiseType === 'lofi'" class="flex items-center justify-center gap-2 mb-6">
+        <div *ngIf="noiseType === 'lofi'" class="flex items-center justify-center gap-2 mb-6 w-full max-w-xl mx-auto">
           <ng-container *ngIf="lofiProgress$ | async as progress">
-            <span class="text-xs text-gray-500 w-9 text-right">{{ formatSeekTime(isSeekingLofi ? seekPreviewValue : progress.currentTime) }}</span>
+            <span class="text-xs text-disabled w-[34px] text-right flex-shrink-0">{{ formatSeekTime(isSeekingLofi ? seekPreviewValue : progress.currentTime) }}</span>
             <input
               type="range"
               min="0"
@@ -173,46 +180,48 @@
               (touchstart)="isSeekingLofi = true"
               (input)="onLofiSeekInput($event)"
               (change)="onLofiSeekCommit($event)"
-              class="w-64 accent-purple-600"
+              class="flex-1 min-w-0 accent-[var(--color-accent)]"
             >
-            <span class="text-xs text-gray-500 w-9">{{ formatSeekTime(progress.duration) }}</span>
+            <span class="text-xs text-disabled w-[34px] text-left flex-shrink-0">{{ formatSeekTime(progress.duration) }}</span>
           </ng-container>
         </div>
 
         <!-- Timer Controls -->
-        <div class="flex justify-center space-x-4">
+        <div class="flex flex-wrap justify-center gap-3">
           <!-- Pause/Resume Button -->
           <button
             *ngIf="(isRunning$ | async)"
             (click)="pauseTimer()"
-            class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+            class="border-2 border-accent text-accent bg-transparent hover:bg-accent/10 px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
           >
-            ⏸️ Pause
+            <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>
+            <span>Pause</span>
           </button>
 
           <button
             *ngIf="(timerState$ | async)?.isPaused"
             (click)="resumeTimer()"
-            class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+            class="bg-accent hover:opacity-90 text-accent-ink px-6 py-2 rounded-lg font-medium transition-opacity duration-200 flex items-center justify-center space-x-2"
           >
-            ▶️ Resume
+            <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11l9-5.5-9-5.5z"/></svg>
+            <span>Resume</span>
           </button>
 
           <!-- Stop Button -->
           <button
             (click)="stopTimer()"
             [disabled]="!(isRunning$ | async) && !(timerState$ | async)?.isPaused"
-            class="bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+            class="bg-danger hover:opacity-90 disabled:bg-disabled-bg disabled:text-disabled disabled:opacity-100 disabled:border disabled:border-line text-accent-ink px-6 py-2 rounded-lg font-medium transition-all duration-200"
           >
-            ⏹️ Stop
+            Stop
           </button>
 
           <!-- Reset Button -->
           <button
             (click)="resetTimer()"
-            class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+            class="bg-strong hover:opacity-90 text-strong-ink px-6 py-2 rounded-lg font-medium transition-opacity duration-200"
           >
-            🔄 Reset
+            Reset
           </button>
         </div>
       </div>
@@ -226,26 +235,26 @@
   </main>
 
   <!-- Settings Modal -->
-  <div *ngIf="showSettingsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="hideSettings()">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+  <div *ngIf="showSettingsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (click)="hideSettings()">
+    <div class="bg-card border border-line rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
       <app-settings (settingsSaved)="hideSettings()" (settingsCancelled)="hideSettings()"></app-settings>
     </div>
   </div>
 
   <!-- Reset Confirmation Modal -->
-  <div *ngIf="showResetConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="hideResetConfirmation()">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4" (click)="$event.stopPropagation()">
+  <div *ngIf="showResetConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (click)="hideResetConfirmation()">
+    <div class="bg-card border border-line rounded-2xl shadow-2xl max-w-md w-full" (click)="$event.stopPropagation()">
       <!-- Modal Header -->
-      <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-t-2xl">
+      <div class="bg-danger-bg text-danger p-6 rounded-t-2xl border-b border-line">
         <div class="flex items-center space-x-3">
           <div class="flex-shrink-0">
-            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+            <div class="w-10 h-10 bg-card rounded-full flex items-center justify-center">
               <span class="text-xl">⚠️</span>
             </div>
           </div>
           <div>
             <h3 class="text-lg font-semibold">Reset Timer</h3>
-            <p class="text-red-100 text-sm">This will stop your current session</p>
+            <p class="text-sm opacity-80">This will stop your current session</p>
           </div>
         </div>
       </div>
@@ -253,10 +262,10 @@
       <!-- Modal Body -->
       <div class="p-6">
         <div class="mb-6">
-          <p class="text-gray-700 text-center">
+          <p class="text-ink text-center">
             You have an active session. Resetting the timer will stop the current session and reset the timer to its original duration.
           </p>
-          <p class="text-gray-500 text-sm text-center mt-2">
+          <p class="text-ink-soft text-sm text-center mt-2">
             Are you sure you want to continue?
           </p>
         </div>
@@ -265,13 +274,13 @@
         <div class="flex space-x-3">
           <button
             (click)="hideResetConfirmation()"
-            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium transition-colors duration-200"
+            class="flex-1 bg-page hover:bg-disabled-bg text-ink-soft border border-line px-4 py-3 rounded-lg font-medium transition-colors duration-200"
           >
             Cancel
           </button>
           <button
             (click)="confirmReset()"
-            class="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg font-medium transition-colors duration-200"
+            class="flex-1 bg-danger hover:opacity-90 text-accent-ink px-4 py-3 rounded-lg font-medium transition-opacity duration-200"
           >
             Reset Timer
           </button>
@@ -281,19 +290,19 @@
   </div>
 
   <!-- Stop Confirmation Modal -->
-  <div *ngIf="showStopConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="hideStopConfirmation()">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4" (click)="$event.stopPropagation()">
+  <div *ngIf="showStopConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (click)="hideStopConfirmation()">
+    <div class="bg-card border border-line rounded-2xl shadow-2xl max-w-md w-full" (click)="$event.stopPropagation()">
       <!-- Modal Header -->
-      <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-t-2xl">
+      <div class="bg-danger-bg text-danger p-6 rounded-t-2xl border-b border-line">
         <div class="flex items-center space-x-3">
           <div class="flex-shrink-0">
-            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+            <div class="w-10 h-10 bg-card rounded-full flex items-center justify-center">
               <span class="text-xl">⚠️</span>
             </div>
           </div>
           <div>
             <h3 class="text-lg font-semibold">Stop Timer</h3>
-            <p class="text-red-100 text-sm">This will end your current session</p>
+            <p class="text-sm opacity-80">This will end your current session</p>
           </div>
         </div>
       </div>
@@ -301,10 +310,10 @@
       <!-- Modal Body -->
       <div class="p-6">
         <div class="mb-6">
-          <p class="text-gray-700 text-center">
+          <p class="text-ink text-center">
             You have a running session. Stopping the timer will end the current session and reset the timer to zero.
           </p>
-          <p class="text-gray-500 text-sm text-center mt-2">
+          <p class="text-ink-soft text-sm text-center mt-2">
             Are you sure you want to stop?
           </p>
         </div>
@@ -313,13 +322,13 @@
         <div class="flex space-x-3">
           <button
             (click)="hideStopConfirmation()"
-            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium transition-colors duration-200"
+            class="flex-1 bg-page hover:bg-disabled-bg text-ink-soft border border-line px-4 py-3 rounded-lg font-medium transition-colors duration-200"
           >
             Cancel
           </button>
           <button
             (click)="confirmStop()"
-            class="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg font-medium transition-colors duration-200"
+            class="flex-1 bg-danger hover:opacity-90 text-accent-ink px-4 py-3 rounded-lg font-medium transition-opacity duration-200"
           >
             Stop Session
           </button>

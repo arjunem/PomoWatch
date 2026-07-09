@@ -12,49 +12,49 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
   imports: [CommonModule],
   template: `
     <!-- Current Session Info - Separate section above Session History -->
-    <div *ngIf="currentSession$ | async as session" class="bg-white rounded-xl shadow-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-blue-800 mb-4">Current Session</h2>
+    <div *ngIf="currentSession$ | async as session" class="bg-card border border-line rounded-xl shadow-lg p-6 mb-6">
+      <h2 class="text-xl font-semibold text-accent mb-4">Current Session</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
         <div class="flex items-center min-w-0">
-          <span class="text-gray-600 whitespace-nowrap">Type:</span>
-          <span class="font-semibold capitalize ml-1 truncate">{{ session.type }}</span>
+          <span class="text-ink-soft whitespace-nowrap">Type:</span>
+          <span class="font-semibold capitalize ml-1 truncate text-ink">{{ session.type }}</span>
         </div>
         <div class="flex items-center min-w-0">
-          <span class="text-gray-600 whitespace-nowrap">Status:</span>
-          <span class="font-semibold capitalize ml-1 truncate">{{ session.status }}</span>
+          <span class="text-ink-soft whitespace-nowrap">Status:</span>
+          <span class="font-semibold capitalize ml-1 truncate text-ink">{{ session.status }}</span>
         </div>
         <div class="flex items-center min-w-0">
-          <span class="text-gray-600 whitespace-nowrap">Duration:</span>
-          <span class="font-semibold ml-1 truncate">{{ session.durationMinutes }} min</span>
+          <span class="text-ink-soft whitespace-nowrap">Duration:</span>
+          <span class="font-semibold ml-1 truncate text-ink">{{ session.durationMinutes }} min</span>
         </div>
         <div class="flex items-center min-w-0">
-          <span class="text-gray-600 whitespace-nowrap">Started:</span>
-          <span class="font-semibold ml-1 truncate">{{ formatCompactTime(session.startTime) }}</span>
+          <span class="text-ink-soft whitespace-nowrap">Started:</span>
+          <span class="font-semibold ml-1 truncate text-ink">{{ formatCompactTime(session.startTime) }}</span>
         </div>
       </div>
     </div>
 
     <!-- Session History Section -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold text-gray-800">Session History</h2>
+    <div class="bg-card border border-line rounded-xl shadow-lg p-6">
+      <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+        <h2 class="text-xl font-semibold text-ink">Session History</h2>
         <div class="flex items-center space-x-3">
           <!-- Clear All Sessions Button -->
           <button
             *ngIf="!isCollapsed && recentSessions.length > 0"
             (click)="openClearAllModal()"
             [disabled]="isClearing"
-            class="flex items-center space-x-1 px-3 py-1 text-sm bg-red-100 text-red-700 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 rounded-lg transition-colors duration-200">
-            <span>🗑️</span>
+            class="flex items-center space-x-1 px-3 py-1 text-sm text-danger hover:bg-danger-bg disabled:text-disabled disabled:hover:bg-transparent rounded-lg transition-colors duration-200">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
             <span>{{ isClearing ? 'Clearing...' : 'Clear All' }}</span>
           </button>
 
           <!-- Toggle Button -->
           <button
             (click)="toggleCollapse()"
-            class="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors duration-200">
+            class="flex items-center space-x-2 text-accent hover:opacity-80 transition-opacity duration-200">
             <span>{{ isCollapsed ? 'Show' : 'Hide' }}</span>
-            <span class="transform transition-transform duration-200" 
+            <span class="transform transition-transform duration-200"
                   [class.rotate-180]="!isCollapsed">▼</span>
           </button>
         </div>
@@ -67,22 +67,23 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
         <div class="space-y-4">
           <!-- Recent Sessions -->
       <div class="mb-4">
-        <h3 class="text-lg font-medium text-gray-800 mb-3">Recent Sessions</h3>
-        <div *ngIf="recentSessions.length === 0" class="text-gray-500 text-center py-8">
+        <h3 class="text-lg font-medium text-ink mb-3">Recent Sessions</h3>
+        <div *ngIf="recentSessions.length === 0" class="text-ink-soft text-center py-8">
           No sessions yet. Start your first Pomodoro session!
         </div>
-        <div *ngFor="let session of recentSessions" class="border border-gray-200 rounded-lg p-4 mb-3">
-          <div class="flex justify-between items-start">
-            <div class="flex-1">
+        <div *ngFor="let session of recentSessions" class="border border-line rounded-lg p-4 mb-3">
+          <div class="flex flex-wrap justify-between items-start gap-2">
+            <div class="flex-1 min-w-0">
               <div class="flex items-center space-x-2 mb-2">
-                <span class="text-lg">{{ session.type === 'work' ? '🎯' : '☕' }}</span>
-                <span class="font-semibold capitalize">{{ session.type }} Session</span>
-                <span class="px-2 py-1 text-xs rounded-full" 
+                <svg *ngIf="session.type === 'work'" class="w-4 h-4 flex-shrink-0 text-accent" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.25" fill="currentColor" stroke="none"/></svg>
+                <svg *ngIf="session.type !== 'work'" class="w-4 h-4 flex-shrink-0 text-accent" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3.5h8v5.5a3 3 0 01-3 3h-2a3 3 0 01-3-3v-5.5z"/><path d="M10.5 4.5h1a1.7 1.7 0 010 3.4h-1"/></svg>
+                <span class="font-semibold capitalize text-ink">{{ session.type }} Session</span>
+                <span class="px-2 py-1 text-xs rounded-full"
                       [class]="getStatusClass(session.status)">
                   {{ session.status }}
                 </span>
               </div>
-              <div class="text-sm text-gray-600">
+              <div class="text-sm text-muted">
                 <span>Duration: {{ session.durationMinutes }} min</span>
                 <span class="mx-2">•</span>
                 <span>Started: {{ formatTime(session.startTime) }}</span>
@@ -90,12 +91,12 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
                 <span *ngIf="session.endTime">Ended: {{ formatTime(session.endTime) }}</span>
               </div>
             </div>
-            <button 
+            <button
               (click)="openDeleteModal(session)"
-              class="flex items-center space-x-1 text-red-500 hover:text-red-700 text-sm px-3 py-1 rounded-lg hover:bg-red-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex items-center space-x-1 text-danger hover:opacity-80 text-sm px-3 py-1 rounded-lg hover:bg-danger-bg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               [disabled]="deletingSessionId === session.id"
               title="Delete session">
-              <span>🗑️</span>
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
               <span class="hidden sm:inline">{{ deletingSessionId === session.id ? 'Deleting...' : 'Delete' }}</span>
             </button>
           </div>
@@ -104,37 +105,40 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
       </div>
     </div>
 
-    <!-- Beautiful Metallic Delete Confirmation Modal -->
-    <div *ngIf="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeDeleteModal()">
-      <div class="bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-2xl shadow-2xl border border-gray-600 p-8 max-w-md mx-4 transform transition-all duration-300 scale-100" (click)="$event.stopPropagation()">
+    <!-- Delete Confirmation Modal -->
+    <div *ngIf="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (click)="closeDeleteModal()">
+      <div class="bg-card border border-line rounded-2xl shadow-2xl p-8 max-w-md w-full transform transition-all duration-300 scale-100" (click)="$event.stopPropagation()">
         <!-- Modal Header -->
         <div class="text-center mb-6">
-          <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center shadow-lg">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-16 h-16 mx-auto mb-4 bg-danger-bg rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
           </div>
-          <h3 class="text-2xl font-bold text-white mb-2">Delete Session</h3>
-          <p class="text-gray-300">This action cannot be undone</p>
+          <h3 class="text-2xl font-bold text-ink mb-2">Delete Session</h3>
+          <p class="text-ink-soft">This action cannot be undone</p>
         </div>
 
         <!-- Session Details -->
-        <div *ngIf="sessionToDelete" class="bg-gray-700 rounded-xl p-4 mb-6 border border-gray-600">
+        <div *ngIf="sessionToDelete" class="bg-page rounded-xl p-4 mb-6 border border-line">
           <div class="flex items-center space-x-3 mb-3">
-            <span class="text-2xl">{{ sessionToDelete.type === 'work' ? '🎯' : '☕' }}</span>
+            <div class="w-9 h-9 flex-shrink-0 rounded-full bg-card border border-line flex items-center justify-center">
+              <svg *ngIf="sessionToDelete.type === 'work'" class="w-4 h-4 text-accent" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.25" fill="currentColor" stroke="none"/></svg>
+              <svg *ngIf="sessionToDelete.type !== 'work'" class="w-4 h-4 text-accent" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3.5h8v5.5a3 3 0 01-3 3h-2a3 3 0 01-3-3v-5.5z"/><path d="M10.5 4.5h1a1.7 1.7 0 010 3.4h-1"/></svg>
+            </div>
             <div>
-              <h4 class="text-lg font-semibold text-white capitalize">{{ sessionToDelete.type }} Session</h4>
-              <p class="text-gray-300 text-sm">{{ formatTime(sessionToDelete.startTime) }}</p>
+              <h4 class="text-lg font-semibold text-ink capitalize">{{ sessionToDelete.type }} Session</h4>
+              <p class="text-ink-soft text-sm">{{ formatTime(sessionToDelete.startTime) }}</p>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4 text-sm">
-            <div class="text-gray-300">
-              <span class="text-gray-400">Duration:</span>
-              <span class="text-white font-medium ml-2">{{ sessionToDelete.durationMinutes }} min</span>
+            <div class="text-ink-soft">
+              <span class="text-muted">Duration:</span>
+              <span class="text-ink font-medium ml-2">{{ sessionToDelete.durationMinutes }} min</span>
             </div>
-            <div class="text-gray-300">
-              <span class="text-gray-400">Status:</span>
-              <span class="text-white font-medium ml-2 capitalize">{{ sessionToDelete.status }}</span>
+            <div class="text-ink-soft">
+              <span class="text-muted">Status:</span>
+              <span class="text-ink font-medium ml-2 capitalize">{{ sessionToDelete.status }}</span>
             </div>
           </div>
         </div>
@@ -143,16 +147,16 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
         <div class="flex space-x-4">
           <button
             (click)="closeDeleteModal()"
-            class="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+            class="flex-1 bg-page hover:bg-disabled-bg text-ink-soft border border-line font-semibold py-3 px-6 rounded-xl transition-colors duration-200">
             Cancel
           </button>
           <button
             (click)="confirmDelete()"
             [disabled]="deletingSessionId !== null"
-            class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+            class="flex-1 bg-danger hover:opacity-90 text-accent-ink font-semibold py-3 px-6 rounded-xl transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
             <span *ngIf="deletingSessionId === null">Delete Forever</span>
             <span *ngIf="deletingSessionId !== null" class="flex items-center justify-center">
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -163,40 +167,40 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
       </div>
     </div>
 
-    <!-- Beautiful Metallic Clear All Confirmation Modal -->
-    <div *ngIf="showClearAllModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeClearAllModal()">
-      <div class="bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-2xl shadow-2xl border border-gray-600 p-8 max-w-md mx-4 transform transition-all duration-300 scale-100" (click)="$event.stopPropagation()">
+    <!-- Clear All Confirmation Modal -->
+    <div *ngIf="showClearAllModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (click)="closeClearAllModal()">
+      <div class="bg-card border border-line rounded-2xl shadow-2xl p-8 max-w-md w-full transform transition-all duration-300 scale-100" (click)="$event.stopPropagation()">
         <!-- Modal Header -->
         <div class="text-center mb-6">
-          <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-red-700 rounded-full flex items-center justify-center shadow-lg">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-16 h-16 mx-auto mb-4 bg-danger-bg rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
           </div>
-          <h3 class="text-2xl font-bold text-white mb-2">Clear All Sessions</h3>
-          <p class="text-gray-300">This will delete all completed sessions</p>
+          <h3 class="text-2xl font-bold text-ink mb-2">Clear All Sessions</h3>
+          <p class="text-ink-soft">This will delete all completed sessions</p>
         </div>
 
         <!-- Session Details -->
-        <div class="bg-gray-700 rounded-xl p-4 mb-6 border border-gray-600">
+        <div class="bg-page rounded-xl p-4 mb-6 border border-line">
           <div class="flex items-center space-x-3 mb-3">
             <span class="text-2xl">📊</span>
             <div>
-              <h4 class="text-lg font-semibold text-white">Session History</h4>
-              <p class="text-gray-300 text-sm">{{ recentSessions.length }} sessions will be cleared</p>
+              <h4 class="text-lg font-semibold text-ink">Session History</h4>
+              <p class="text-ink-soft text-sm">{{ recentSessions.length }} sessions will be cleared</p>
             </div>
           </div>
-          <div class="text-sm text-gray-300">
+          <div class="text-sm text-ink-soft">
             <div class="flex items-center space-x-2 mb-2">
-              <span class="text-green-400">✓</span>
+              <span class="text-green-500">✓</span>
               <span>Current running session will be preserved</span>
             </div>
             <div class="flex items-center space-x-2 mb-2">
-              <span class="text-yellow-400">⚠</span>
+              <span class="text-yellow-500">⚠</span>
               <span>Completed and cancelled sessions will be deleted</span>
             </div>
             <div class="flex items-center space-x-2">
-              <span class="text-blue-400">ℹ</span>
+              <span class="text-accent">ℹ</span>
               <span>Sessions are recoverable from database</span>
             </div>
           </div>
@@ -206,16 +210,16 @@ import { parseUtcDate, formatLocalDate } from '../../utils/date.utils';
         <div class="flex space-x-4">
           <button
             (click)="closeClearAllModal()"
-            class="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+            class="flex-1 bg-page hover:bg-disabled-bg text-ink-soft border border-line font-semibold py-3 px-6 rounded-xl transition-colors duration-200">
             Cancel
           </button>
           <button
             (click)="confirmClearAll()"
             [disabled]="isClearing"
-            class="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+            class="flex-1 bg-danger hover:opacity-90 text-accent-ink font-semibold py-3 px-6 rounded-xl transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
             <span *ngIf="!isClearing">Clear All Sessions</span>
             <span *ngIf="isClearing" class="flex items-center justify-center">
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -398,7 +402,7 @@ export class SessionHistoryComponent implements OnInit, OnDestroy {
       case 'paused':
         return 'bg-yellow-100 text-yellow-800';
       case 'cancelled':
-        return 'bg-red-100 text-red-800';
+        return 'bg-danger-bg text-danger';
       default:
         return 'bg-gray-100 text-gray-800';
     }

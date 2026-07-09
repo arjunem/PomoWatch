@@ -10,24 +10,24 @@ import { TimerService } from '../../services/timer.service';
   imports: [CommonModule],
   template: `
     <!-- Today's Stats - Always visible section -->
-    <div *ngIf="todayStats$ | async as stats" class="bg-white rounded-xl shadow-lg p-6 mt-6">
-      <h2 class="text-xl font-semibold text-gray-800 mb-4">Today's Progress</h2>
+    <div *ngIf="todayStats$ | async as stats" class="bg-card border border-line rounded-xl shadow-lg p-6 mt-6">
+      <h2 class="text-xl font-semibold text-ink mb-4">Today's Progress</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="text-center p-3 bg-green-50 rounded-lg">
-          <div class="text-2xl font-bold text-green-600">{{ stats.totalWorkTime }}</div>
-          <div class="text-sm text-gray-600">Work Minutes</div>
+        <div class="text-center p-3 bg-tile rounded-lg">
+          <div class="text-2xl font-bold text-accent">{{ stats.totalWorkTime }}</div>
+          <div class="text-sm text-muted">Work Minutes</div>
         </div>
-        <div class="text-center p-3 bg-blue-50 rounded-lg">
-          <div class="text-2xl font-bold text-blue-600">{{ stats.totalBreakTime }}</div>
-          <div class="text-sm text-gray-600">Break Minutes</div>
+        <div class="text-center p-3 bg-tile rounded-lg">
+          <div class="text-2xl font-bold text-accent">{{ stats.totalBreakTime }}</div>
+          <div class="text-sm text-muted">Break Minutes</div>
         </div>
-        <div class="text-center p-3 bg-purple-50 rounded-lg">
-          <div class="text-2xl font-bold text-purple-600">{{ stats.completedSessions }}</div>
-          <div class="text-sm text-gray-600">Completed</div>
+        <div class="text-center p-3 bg-tile rounded-lg">
+          <div class="text-2xl font-bold text-accent">{{ stats.completedSessions }}</div>
+          <div class="text-sm text-muted">Completed</div>
         </div>
-        <div class="text-center p-3 bg-orange-50 rounded-lg">
-          <div class="text-2xl font-bold text-orange-600">{{ stats.totalSessions }}</div>
-          <div class="text-sm text-gray-600">Total Sessions</div>
+        <div class="text-center p-3 bg-tile rounded-lg">
+          <div class="text-2xl font-bold text-accent">{{ stats.totalSessions }}</div>
+          <div class="text-sm text-muted">Total Sessions</div>
         </div>
       </div>
     </div>

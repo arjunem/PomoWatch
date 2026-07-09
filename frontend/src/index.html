@@ -6,6 +6,22 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>
+    (function () {
+      try {
+        var stored = JSON.parse(localStorage.getItem('pomowatch-theme'));
+        var validSchemes = ['indigo-slate', 'deep-teal', 'warm-clay'];
+        var validModes = ['light', 'dark'];
+        var scheme = stored && validSchemes.indexOf(stored.scheme) !== -1 ? stored.scheme : 'indigo-slate';
+        var mode = stored && validModes.indexOf(stored.mode) !== -1 ? stored.mode : 'light';
+        document.documentElement.setAttribute('data-theme', scheme);
+        document.documentElement.setAttribute('data-mode', mode);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'indigo-slate');
+        document.documentElement.setAttribute('data-mode', 'light');
+      }
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>

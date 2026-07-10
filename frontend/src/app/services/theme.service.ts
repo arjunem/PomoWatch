@@ -1,8 +1,37 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-export type ThemeScheme = 'indigo-slate' | 'deep-teal' | 'warm-clay';
+export type ThemeScheme =
+  | 'indigo-slate'
+  | 'deep-teal'
+  | 'warm-clay'
+  | 'gold-charcoal'
+  | 'cobalt-blue'
+  | 'emerald'
+  | 'navy-ice'
+  | 'slate'
+  | 'terracotta'
+  | 'chartreuse-olive'
+  | 'rose-magenta'
+  | 'violet'
+  | 'bronze';
 export type ThemeMode = 'light' | 'dark';
+
+const THEME_SCHEMES: ThemeScheme[] = [
+  'indigo-slate',
+  'deep-teal',
+  'warm-clay',
+  'gold-charcoal',
+  'cobalt-blue',
+  'emerald',
+  'navy-ice',
+  'slate',
+  'terracotta',
+  'chartreuse-olive',
+  'rose-magenta',
+  'violet',
+  'bronze'
+];
 
 const STORAGE_KEY = 'pomowatch-theme';
 const DEFAULT_SCHEME: ThemeScheme = 'indigo-slate';
@@ -85,7 +114,7 @@ export class ThemeService {
 }
 
 function isValidScheme(value: unknown): value is ThemeScheme {
-  return value === 'indigo-slate' || value === 'deep-teal' || value === 'warm-clay';
+  return THEME_SCHEMES.includes(value as ThemeScheme);
 }
 
 function isValidMode(value: unknown): value is ThemeMode {

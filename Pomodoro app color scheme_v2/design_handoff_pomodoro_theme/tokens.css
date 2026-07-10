@@ -119,7 +119,15 @@
   --color-stat-tile-bg: #281F17;
 }
 
-/* ============ GOLD CHARCOAL ============ */
+/* ============================================================
+   10 ADDITIONAL COMBOS (compact previews — timer card only)
+   Same semantic roles as the 3 primary themes above. Approximated
+   roles (neutral-strong, disabled-*, stat-tile-bg, track-bg,
+   muted-icon) are derived below using the same pattern as the
+   primary 3 — spot-check against your real components before
+   shipping; these were not verified across every card.
+   ============================================================ */
+
 [data-theme="gold-charcoal"][data-mode="light"] {
   --color-bg-page: #F6F3EC;
   --color-bg-card: #FFFFFF;
@@ -157,7 +165,6 @@
   --color-stat-tile-bg: #221D15;
 }
 
-/* ============ COBALT BLUE ============ */
 [data-theme="cobalt-blue"][data-mode="light"] {
   --color-bg-page: #EEF2FB;
   --color-bg-card: #FFFFFF;
@@ -195,7 +202,6 @@
   --color-stat-tile-bg: #161A2E;
 }
 
-/* ============ EMERALD ============ */
 [data-theme="emerald"][data-mode="light"] {
   --color-bg-page: #EDF7F0;
   --color-bg-card: #FFFFFF;
@@ -233,7 +239,6 @@
   --color-stat-tile-bg: #12261A;
 }
 
-/* ============ NAVY ICE ============ */
 [data-theme="navy-ice"][data-mode="light"] {
   --color-bg-page: #EEF3FA;
   --color-bg-card: #FFFFFF;
@@ -271,7 +276,6 @@
   --color-stat-tile-bg: #101B2C;
 }
 
-/* ============ SLATE ============ */
 [data-theme="slate"][data-mode="light"] {
   --color-bg-page: #F1F2F3;
   --color-bg-card: #FFFFFF;
@@ -309,7 +313,6 @@
   --color-stat-tile-bg: #1B1F26;
 }
 
-/* ============ TERRACOTTA ============ */
 [data-theme="terracotta"][data-mode="light"] {
   --color-bg-page: #FBF0E8;
   --color-bg-card: #FFFFFF;
@@ -347,7 +350,6 @@
   --color-stat-tile-bg: #271910;
 }
 
-/* ============ CHARTREUSE OLIVE ============ */
 [data-theme="chartreuse-olive"][data-mode="light"] {
   --color-bg-page: #F5F7E7;
   --color-bg-card: #FFFFFF;
@@ -385,7 +387,6 @@
   --color-stat-tile-bg: #1F2211;
 }
 
-/* ============ ROSE MAGENTA ============ */
 [data-theme="rose-magenta"][data-mode="light"] {
   --color-bg-page: #FBEFF2;
   --color-bg-card: #FFFFFF;
@@ -423,7 +424,6 @@
   --color-stat-tile-bg: #28151C;
 }
 
-/* ============ VIOLET ============ */
 [data-theme="violet"][data-mode="light"] {
   --color-bg-page: #F3EEFA;
   --color-bg-card: #FFFFFF;
@@ -461,7 +461,6 @@
   --color-stat-tile-bg: #1D1730;
 }
 
-/* ============ BRONZE ============ */
 [data-theme="bronze"][data-mode="light"] {
   --color-bg-page: #F7F1E7;
   --color-bg-card: #FFFFFF;

@@ -19,6 +19,16 @@ import { ThemeService, ThemeScheme, ThemeMode } from '../../services/theme.servi
         <option value="indigo-slate">Indigo Slate</option>
         <option value="deep-teal">Deep Teal</option>
         <option value="warm-clay">Warm Clay</option>
+        <option value="gold-charcoal">Gold Charcoal</option>
+        <option value="cobalt-blue">Cobalt Blue</option>
+        <option value="emerald">Emerald</option>
+        <option value="navy-ice">Navy Ice</option>
+        <option value="slate">Slate</option>
+        <option value="terracotta">Terracotta</option>
+        <option value="chartreuse-olive">Chartreuse Olive</option>
+        <option value="rose-magenta">Rose Magenta</option>
+        <option value="violet">Violet</option>
+        <option value="bronze">Bronze</option>
       </select>
 
       <button

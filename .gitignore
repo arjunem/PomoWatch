@@ -134,3 +134,5 @@ out-tsc/**/*.map
 !tailwind.config.js
 
 claude.md
+
+.fake

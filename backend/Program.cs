@@ -5,6 +5,13 @@ using PomodoroAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Render (and other PaaS hosts) inject the listen port via PORT; bind to it when present
+var hostPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(hostPort))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{hostPort}");
+}
+
 // Add services to the container.
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -17,12 +24,21 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure CORS
+// Configure CORS: allow local dev, any Cloudflare Pages deployment (prod + preview
+// subdomains), and an optional extra origin (e.g. a custom domain) via CORS_EXTRA_ORIGIN
+var extraOrigin = Environment.GetEnvironmentVariable("CORS_EXTRA_ORIGIN");
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowLocalhost", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "http://localhost:4201")
+        policy.SetIsOriginAllowed(origin =>
+              {
+                  if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
+                  if (uri.Host == "localhost") return true;
+                  if (uri.Host.EndsWith(".pages.dev", StringComparison.OrdinalIgnoreCase)) return true;
+                  if (!string.IsNullOrEmpty(extraOrigin) && origin.Equals(extraOrigin, StringComparison.OrdinalIgnoreCase)) return true;
+                  return false;
+              })
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -49,7 +65,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // Enable CORS (must be before other middleware)
-app.UseCors("AllowLocalhost");
+app.UseCors("AllowFrontend");
 
 // Only use HTTPS redirection in production (Docker will handle HTTP)
 if (!app.Environment.IsDevelopment())

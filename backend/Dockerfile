@@ -155,6 +155,12 @@ ENV ASPNETCORE_URLS=http://0.0.0.0:5000
 # - Can be overridden when running container with -e flag
 ENV ASPNETCORE_ENVIRONMENT=Development
 
+# Disable appsettings.json hot-reload: it uses inotify file watchers, and
+# restricted/sandboxed hosts (e.g. Render's free tier) hit the container's low
+# inotify instance limit and crash on startup. Containers are immutable anyway,
+# so reload-on-change buys nothing here.
+ENV DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
+
 # ---------------------------------------------------------------------------
 # Define container startup command
 # ---------------------------------------------------------------------------

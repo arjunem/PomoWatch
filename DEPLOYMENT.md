@@ -1,6 +1,63 @@
 # 🚀 Deployment Guide - PomoWatch
 
-This guide covers deploying PomoWatch to GitHub Container Registry (GHCR) and running the application in production.
+This guide covers deploying PomoWatch to GitHub Container Registry (GHCR) and running the application in production, plus a free-tier split deployment (Render + Cloudflare Workers) for personal/phone use.
+
+## 🆓 Free-Tier Deployment (Render backend + Cloudflare Workers frontend)
+
+Backend (.NET API + SQLite) and frontend (Angular) are deployed separately, on different origins, using each platform's always-free tier. No custom domain or credit card required.
+
+### Architecture
+
+```
+Browser (phone/tablet) → https://<worker>.workers.dev  (Angular static assets, Cloudflare Workers)
+                              │
+                              ▼ CORS'd HTTPS calls to /api/*
+                        https://<service>.onrender.com/api  (.NET 8 API, Render Docker web service)
+```
+
+### Backend on Render
+
+1. New Web Service → connect the GitHub repo → **Root Directory**: `backend` → Environment: **Docker** (uses [backend/Dockerfile](backend/Dockerfile))
+2. Environment variables:
+   - `ASPNETCORE_ENVIRONMENT=Production`
+   - `ConnectionStrings__DefaultConnection=Data Source=/app/data/pomodoro.db`
+   - Optional: `CORS_EXTRA_ORIGIN=https://your-custom-domain` if you ever add one
+3. Health check path: `/api/health`
+4. Note the assigned URL (`https://<service-name>.onrender.com`) — it must match `apiBaseUrl` in [frontend/src/environments/environment.cloudflare.ts](frontend/src/environments/environment.cloudflare.ts).
+
+**Free-tier caveats:**
+- Sleeps after 15 minutes of inactivity; next request pays a 30-60s cold-start penalty.
+- No persistent disk on the free plan — the SQLite file survives restarts but is wiped on every redeploy.
+- 750 free compute hours/month (enough for one always-on-ish personal instance).
+
+### Frontend on Cloudflare Workers
+
+Cloudflare's unified "Workers & Pages" dashboard deploys static Angular builds via `wrangler deploy`, driven by [frontend/wrangler.jsonc](frontend/wrangler.jsonc) — this is the newer path and replaces classic Pages' `_redirects`-based config.
+
+1. Connect the same repo → **Root directory**: `frontend`
+2. Build command: `npm run build:cloudflare` (uses the `cloudflare` Angular build config → `environment.cloudflare.ts`, an absolute API URL, since frontend and backend are on different origins)
+3. Deploy command: `npx wrangler deploy` (reads `wrangler.jsonc`, which points `assets.directory` at `dist/frontend/browser` and sets `not_found_handling: "single-page-application"` for Angular client-side routing)
+4. Live at `https://<worker-name>.workers.dev`
+
+Do **not** add a `public/_redirects` file alongside `wrangler.jsonc`'s SPA `not_found_handling` — the two fight each other and Cloudflare rejects the deploy with an "infinite loop" error.
+
+### Backend fixes required for this setup
+
+Two issues only show up once the backend runs on Render specifically (both already applied in [Program.cs](backend/Program.cs) and [Dockerfile](backend/Dockerfile)):
+
+- **Port binding**: Render assigns the listen port via a `PORT` env var. `Program.cs` binds Kestrel to it when present (`builder.WebHost.UseUrls($"http://0.0.0.0:{hostPort}")`), falling back to the Docker-default `ASPNETCORE_URLS` otherwise.
+- **Startup crash from inotify limits**: ASP.NET's config hot-reload watches `appsettings.json` via `FileSystemWatcher`/inotify, which exceeds Render's low per-container inotify instance limit and crashes on boot with `IOException: configured user limit (128) on inotify instances`. Fixed by setting `DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false` in the Dockerfile — safe since containers are immutable and don't need config hot-reload anyway.
+- **CORS**: `Program.cs` allows `localhost`, any `*.pages.dev`/`*.workers.dev` origin, plus an optional `CORS_EXTRA_ORIGIN` — update the allow-list if you move the frontend elsewhere.
+
+### Frontend offline-mode resilience
+
+Because Render cold-starts can take up to ~60s, [app.ts](frontend/src/app/app.ts) retries the startup health check (6 attempts, 10s apart) instead of flipping to offline mode on the first failed hit, and a 5-minute keep-alive ping (while the tab is open) both delays the backend's idle sleep and auto-heals offline mode once the backend responds — without overriding a deliberate manual "go offline" choice.
+
+### Updating the backend URL
+
+If you rename the Render service (changing its `.onrender.com` URL), update `apiBaseUrl` in [environment.cloudflare.ts](frontend/src/environments/environment.cloudflare.ts) and redeploy the frontend.
+
+---
 
 ## 📦 GitHub Container Registry (GHCR)
 

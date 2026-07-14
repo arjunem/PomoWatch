@@ -5,5 +5,5 @@
  */
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://pomowatch-backend.onrender.com/api'
+  apiBaseUrl: 'https://pomowatch-api.onrender.com/api'
 };

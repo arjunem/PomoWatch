@@ -24,8 +24,8 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure CORS: allow local dev, any Cloudflare Pages deployment (prod + preview
-// subdomains), and an optional extra origin (e.g. a custom domain) via CORS_EXTRA_ORIGIN
+// Configure CORS: allow local dev, any Cloudflare Pages/Workers deployment (prod +
+// preview subdomains), and an optional extra origin (e.g. a custom domain) via CORS_EXTRA_ORIGIN
 var extraOrigin = Environment.GetEnvironmentVariable("CORS_EXTRA_ORIGIN");
 builder.Services.AddCors(options =>
 {
@@ -36,6 +36,7 @@ builder.Services.AddCors(options =>
                   if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
                   if (uri.Host == "localhost") return true;
                   if (uri.Host.EndsWith(".pages.dev", StringComparison.OrdinalIgnoreCase)) return true;
+                  if (uri.Host.EndsWith(".workers.dev", StringComparison.OrdinalIgnoreCase)) return true;
                   if (!string.IsNullOrEmpty(extraOrigin) && origin.Equals(extraOrigin, StringComparison.OrdinalIgnoreCase)) return true;
                   return false;
               })

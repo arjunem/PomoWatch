@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
-import { Observable, Subject, takeUntil } from 'rxjs';
+import { Observable, Subject, interval, of, timer, takeUntil } from 'rxjs';
+import { switchMap, catchError, retry, map } from 'rxjs/operators';
 import { TimerService } from './services/timer.service';
 import { ApiService } from './services/api.service';
 import { SettingsService } from './services/settings.service';
@@ -24,6 +25,12 @@ import { ThemeSelectorComponent } from './components/theme-selector/theme-select
   styleUrl: './app.css'
 })
 export class App implements OnInit, OnDestroy {
+  private static readonly KEEP_ALIVE_INTERVAL_MS = 5 * 60 * 1000;
+  // Render's free tier can take up to ~60s to wake a sleeping backend; retry
+  // the startup health check across that window instead of failing on the first hit
+  private static readonly COLD_START_RETRY_COUNT = 6;
+  private static readonly COLD_START_RETRY_DELAY_MS = 10 * 1000;
+
   private destroy$ = new Subject<void>();
 
   // ===== OBSERVABLE STREAMS =====
@@ -144,9 +151,13 @@ export class App implements OnInit, OnDestroy {
    * Performs API health check to verify backend connectivity
    */
   ngOnInit(): void {
-    // Check API connectivity on startup and switch to offline mode if unavailable
+    // Check API connectivity on startup and switch to offline mode if unavailable.
+    // Retries with a delay to tolerate the backend waking up from a cold start.
     this.apiService.getHealth()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        retry({ count: App.COLD_START_RETRY_COUNT, delay: () => timer(App.COLD_START_RETRY_DELAY_MS) }),
+        takeUntil(this.destroy$)
+      )
       .subscribe({
         next: (response) => {
           console.log('API Health Check: Available');
@@ -176,6 +187,29 @@ export class App implements OnInit, OnDestroy {
           console.error('Failed to load settings on startup:', error);
           // If settings can't be loaded, switch to offline mode
           this.offlineService.setOfflineMode(true);
+        }
+      });
+
+    // Keep the free-tier backend warm while this tab is open, so it doesn't
+    // spin down from inactivity (Render sleeps the API after 15 idle minutes).
+    // Also self-heals offline mode: flips back online once a ping succeeds,
+    // without waiting for a manual toggle. A failed ping does NOT force offline
+    // mode here — that would fight a deliberate manual "go offline" choice and
+    // over-react to a single transient blip; the startup check already handles
+    // the real cold-start case with retries.
+    interval(App.KEEP_ALIVE_INTERVAL_MS)
+      .pipe(
+        switchMap(() => this.apiService.getHealth().pipe(
+          map(() => true),
+          catchError(() => of(false))
+        )),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(isHealthy => {
+        // Don't override a deliberate manual "go offline" choice (persisted in
+        // settings) - only auto-heal state that was set by connectivity failure
+        if (isHealthy && !this.settingsService.currentSettings.offlineMode) {
+          this.offlineService.setOfflineMode(false);
         }
       });
   }

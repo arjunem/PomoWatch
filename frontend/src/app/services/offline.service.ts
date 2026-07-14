@@ -34,37 +34,6 @@ export class OfflineService {
   }
 
   /**
-   * Check if the app should run in offline mode
-   * This includes both browser offline state and API connectivity
-   */
-  public async checkOfflineMode(): Promise<boolean> {
-    // First check browser connectivity
-    if (!navigator.onLine) {
-      console.log('OfflineService: Browser is offline');
-      return true;
-    }
-
-    // Then check API connectivity
-    try {
-      const response = await fetch('/api/health', {
-        method: 'GET',
-        timeout: 5000
-      } as any);
-      
-      if (!response.ok) {
-        console.log('OfflineService: API health check failed');
-        return true;
-      }
-
-      console.log('OfflineService: API is available');
-      return false;
-    } catch (error) {
-      console.log('OfflineService: API connectivity check failed:', error);
-      return true;
-    }
-  }
-
-  /**
    * Get current offline state
    */
   public get isOffline(): boolean {
